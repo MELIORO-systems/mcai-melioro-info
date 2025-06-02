@@ -135,7 +135,7 @@ body {
     align-items: center;
 }
 
-/* === INDEX BUTTON === */
+/* === RELOAD BUTTON === */
 .index-button {
     background: var(--surface);
     color: var(--text-primary);
