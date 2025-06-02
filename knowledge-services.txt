@@ -1,0 +1,41 @@
+VÝVOJ WEBOVÝCH APLIKACÍ
+- Aplikace na míru podle vašich potřeb
+- Moderní technologie (React, Vue, Angular)
+- Responzivní design pro všechna zařízení
+- Rychlé a bezpečné řešení
+- Cena: od 150 000 Kč
+
+E-COMMERCE ŘEŠENÍ
+- Kompletní e-shopy na klíč
+- Integrace platebních bran
+- Napojení na účetní systémy
+- Optimalizace pro vyhledávače
+- Cena: od 200 000 Kč
+
+AI INTEGRACE
+- Chatboty a virtuální asistenti
+- Automatizace procesů pomocí AI
+- Analýza dat a prediktivní modely
+- Integrace ChatGPT/Claude do vašich systémů
+- Cena: od 80 000 Kč
+
+MOBILNÍ APLIKACE
+- Nativní aplikace pro iOS a Android
+- Cross-platform řešení (React Native, Flutter)
+- Synchronizace s webovou aplikací
+- Push notifikace a offline režim
+- Cena: od 250 000 Kč
+
+KONZULTACE A ANALÝZY
+- Analýza současného stavu IT
+- Návrh optimalizací a zlepšení
+- Výběr vhodných technologií
+- Projektové řízení
+- Cena: 2 500 Kč/hodina
+
+PODPORA A ÚDRŽBA
+- Pravidelné aktualizace a zálohy
+- Monitoring a řešení incidentů
+- SLA garance dostupnosti
+- Technická podpora 24/7
+- Cena: od 5 000 Kč/měsíc
