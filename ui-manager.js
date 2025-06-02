@@ -110,9 +110,9 @@ class UIManager {
         chatInput.value = query;
         chatInput.focus();
         
-        // Auto-resize textarea
-        chatInput.style.height = 'auto';
-        chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+        // Trigger auto-resize
+        const event = new Event('input', { bubbles: true });
+        chatInput.dispatchEvent(event);
         
         // Skrýt welcome screen
         this.hideWelcomeScreen();
