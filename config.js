@@ -58,7 +58,7 @@ const CONFIG = {
         WELCOME_TITLE: "Vítejte v AI Chatu",
         WELCOME_SUBTITLE: "Zeptejte se mě na cokoliv o našich službách a produktech",
         ERROR: "Omlouvám se, nastala chyba. Zkuste to prosím znovu.",
-        NO_API_KEY: "API klíč není nastaven. Přidejte váš OpenAI API klíč do souboru config.js.",
+        NO_API_KEY: "API klíč není nastaven. Přidejte API klíč do souboru config.js.",
         LOADING: "Přemýšlím..."
     },
     
