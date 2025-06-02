@@ -5,6 +5,7 @@ let messages = [];
 let rateLimitCounter = 0;
 let rateLimitTimer = null;
 let knowledgeBase = ""; // Uložená znalostní báze
+let assistantThreadId = null; // Pro Assistant API
 
 // Načíst znalostní bázi
 async function loadKnowledgeBase() {
@@ -62,7 +63,8 @@ async function sendMessage() {
     }
     
     // Kontrola API klíče
-    if (!CONFIG.API.OPENAI.API_KEY || CONFIG.API.OPENAI.API_KEY === "") {
+    const apiKey = CONFIG.MODE === "agent" ? CONFIG.AGENT.API_KEY : CONFIG.API.OPENAI.API_KEY;
+    if (!apiKey) {
         if (window.uiManager) {
             window.uiManager.addMessage('error', CONFIG.MESSAGES.NO_API_KEY);
         }
@@ -89,8 +91,14 @@ async function sendMessage() {
     }
     
     try {
-        // Volání OpenAI API
-        const response = await callOpenAI(messages);
+        let response;
+        
+        // Volání podle zvoleného režimu
+        if (CONFIG.MODE === "agent") {
+            response = await callAssistant(messageText);
+        } else {
+            response = await callOpenAI(messages);
+        }
         
         // Přidat odpověď
         if (window.uiManager) {
@@ -121,6 +129,98 @@ async function sendMessage() {
         sendButton.textContent = 'Odeslat';
         chatInput.focus();
     }
+}
+
+// Volání OpenAI Assistant API
+async function callAssistant(userMessage) {
+    // 1. Vytvořit thread pokud neexistuje
+    if (!assistantThreadId) {
+        const threadResponse = await fetch("https://api.openai.com/v1/threads", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${CONFIG.AGENT.API_KEY}`,
+                "OpenAI-Beta": "assistants=v2"
+            }
+        });
+        
+        if (!threadResponse.ok) {
+            throw new Error(`Assistant API error: ${threadResponse.status}`);
+        }
+        
+        const threadData = await threadResponse.json();
+        assistantThreadId = threadData.id;
+        console.log('📋 Created thread:', assistantThreadId);
+    }
+    
+    // 2. Přidat zprávu do threadu
+    await fetch(`https://api.openai.com/v1/threads/${assistantThreadId}/messages`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${CONFIG.AGENT.API_KEY}`,
+            "OpenAI-Beta": "assistants=v2"
+        },
+        body: JSON.stringify({
+            role: "user",
+            content: userMessage
+        })
+    });
+    
+    // 3. Spustit assistanta
+    const runResponse = await fetch(`https://api.openai.com/v1/threads/${assistantThreadId}/runs`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${CONFIG.AGENT.API_KEY}`,
+            "OpenAI-Beta": "assistants=v2"
+        },
+        body: JSON.stringify({
+            assistant_id: CONFIG.AGENT.ASSISTANT_ID
+        })
+    });
+    
+    if (!runResponse.ok) {
+        throw new Error(`Assistant run error: ${runResponse.status}`);
+    }
+    
+    const runData = await runResponse.json();
+    const runId = runData.id;
+    
+    // 4. Čekat na dokončení
+    let runStatus = "in_progress";
+    while (runStatus === "in_progress" || runStatus === "queued") {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Čekat 1s
+        
+        const statusResponse = await fetch(
+            `https://api.openai.com/v1/threads/${assistantThreadId}/runs/${runId}`,
+            {
+                headers: {
+                    "Authorization": `Bearer ${CONFIG.AGENT.API_KEY}`,
+                    "OpenAI-Beta": "assistants=v2"
+                }
+            }
+        );
+        
+        const statusData = await statusResponse.json();
+        runStatus = statusData.status;
+    }
+    
+    // 5. Získat odpověď
+    const messagesResponse = await fetch(
+        `https://api.openai.com/v1/threads/${assistantThreadId}/messages`,
+        {
+            headers: {
+                "Authorization": `Bearer ${CONFIG.AGENT.API_KEY}`,
+                "OpenAI-Beta": "assistants=v2"
+            }
+        }
+    );
+    
+    const messagesData = await messagesResponse.json();
+    const lastMessage = messagesData.data[0];
+    
+    return lastMessage.content[0].text.value;
 }
 
 // Volání OpenAI API
@@ -178,13 +278,19 @@ function checkRateLimit() {
 // Inicializace aplikace
 async function initApp() {
     console.log('🚀 Starting My AI Chat...');
+    console.log(`🤖 Mode: ${CONFIG.MODE}`);
     
-    // Načíst knowledge base
-    await loadKnowledgeBase();
+    // Načíst knowledge base pouze v knowledge režimu
+    if (CONFIG.MODE === "knowledge") {
+        await loadKnowledgeBase();
+    } else if (CONFIG.MODE === "agent") {
+        console.log('🤖 Using Assistant:', CONFIG.AGENT.ASSISTANT_ID || 'Not configured');
+    }
     
     // Kontrola API klíče při startu
-    if (!CONFIG.API.OPENAI.API_KEY) {
-        console.warn('⚠️ OpenAI API key is not set in config.js');
+    const apiKey = CONFIG.MODE === "agent" ? CONFIG.AGENT.API_KEY : CONFIG.API.OPENAI.API_KEY;
+    if (!apiKey) {
+        console.warn('⚠️ API key is not set in config.js');
     }
     
     // Nastavit téma
