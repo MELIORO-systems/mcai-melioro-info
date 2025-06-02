@@ -145,9 +145,14 @@ async function initApp() {
     // Nastavit title a subtitle
     const titleElement = document.querySelector('.chat-header h1 a');
     const subtitleElement = document.querySelector('.header-subtitle');
+    const reloadButton = document.querySelector('.index-button');
     
     if (titleElement) titleElement.textContent = CONFIG.UI.APP_TITLE;
     if (subtitleElement) subtitleElement.textContent = CONFIG.UI.APP_SUBTITLE;
+    if (reloadButton) {
+        reloadButton.textContent = CONFIG.UI.RELOAD_BUTTON_TEXT;
+        reloadButton.style.display = CONFIG.UI.SHOW_RELOAD_BUTTON ? 'block' : 'none';
+    }
     
     console.log('✅ My AI Chat ready');
 }
