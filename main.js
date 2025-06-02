@@ -132,6 +132,11 @@ function checkRateLimit() {
 async function initApp() {
     console.log('🚀 Starting My AI Chat...');
     
+    // Kontrola API klíče při startu
+    if (!CONFIG.API.OPENAI.API_KEY) {
+        console.warn('⚠️ OpenAI API key is not set in config.js');
+    }
+    
     // Nastavit téma
     if (window.uiManager) {
         window.uiManager.setTheme(CONFIG.UI.DEFAULT_THEME);
