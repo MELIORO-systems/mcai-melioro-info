@@ -76,8 +76,8 @@ class UIManager {
         chatMessages.innerHTML = `
             <div class="welcome-container">
                 <div class="welcome-content">
-                    <h2 class="welcome-title">${CONFIG.MESSAGES.WELCOME.split('.')[0]}</h2>
-                    <p class="welcome-subtitle">${CONFIG.MESSAGES.WELCOME.split('.').slice(1).join('.')}</p>
+                    <h2 class="welcome-title">${CONFIG.MESSAGES.WELCOME_TITLE}</h2>
+                    <p class="welcome-subtitle">${CONFIG.MESSAGES.WELCOME_SUBTITLE}</p>
                 </div>
                 <div class="example-queries" id="example-queries">
                     <!-- Příklady budou načteny dynamicky -->
