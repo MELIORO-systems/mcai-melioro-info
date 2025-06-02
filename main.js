@@ -37,7 +37,8 @@ async function sendMessage() {
     
     // Vyčistit input a nastavit loading stav
     chatInput.value = '';
-    chatInput.style.height = 'auto';
+    chatInput.style.height = 'auto'; // Reset výšky
+    chatInput.style.overflowY = 'hidden'; // Reset scrollbaru
     chatInput.disabled = true;
     sendButton.disabled = true;
     sendButton.textContent = CONFIG.MESSAGES.LOADING;
