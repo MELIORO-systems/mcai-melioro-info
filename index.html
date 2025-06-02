@@ -73,21 +73,47 @@
     
     <!-- 4. Globální funkce -->
     <script>
-        // Auto-resize textarea
+        // Auto-resize textarea jako na Claude.ai
         document.addEventListener('DOMContentLoaded', function() {
             const chatInput = document.getElementById('chat-input');
             if (chatInput) {
-                chatInput.addEventListener('input', function() {
+                // Funkce pro auto-resize
+                function autoResize() {
+                    // Reset výšky
                     this.style.height = 'auto';
-                    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+                    
+                    // Vypočítat novou výšku
+                    const scrollHeight = this.scrollHeight;
+                    const lineHeight = parseInt(window.getComputedStyle(this).lineHeight);
+                    const minHeight = lineHeight * 1; // 1 řádek minimum
+                    const maxHeight = lineHeight * 8; // 8 řádků maximum
+                    
+                    // Nastavit výšku
+                    if (scrollHeight <= maxHeight) {
+                        this.style.height = scrollHeight + 'px';
+                        this.style.overflowY = 'hidden'; // Skrýt scrollbar
+                    } else {
+                        this.style.height = maxHeight + 'px';
+                        this.style.overflowY = 'auto'; // Zobrazit scrollbar
+                    }
+                }
+                
+                // Event listeners
+                chatInput.addEventListener('input', autoResize);
+                chatInput.addEventListener('paste', function() {
+                    setTimeout(() => autoResize.call(this), 0);
                 });
                 
+                // Enter key handling
                 chatInput.addEventListener('keydown', function(event) {
                     if (event.key === 'Enter' && !event.shiftKey) {
                         event.preventDefault();
                         sendMessage();
                     }
                 });
+                
+                // Počáteční nastavení
+                autoResize.call(chatInput);
             }
         });
         
