@@ -360,6 +360,7 @@ body {
     align-items: flex-end;
 }
 
+/* Plynulá animace pro změnu výšky textarea */
 .chat-input {
     flex: 1;
     padding: 0.875rem 1.25rem;
@@ -369,12 +370,14 @@ body {
     resize: none;
     outline: none;
     background: var(--background);
-    transition: all 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, height 0.1s ease;
     font-family: inherit;
-    line-height: 1.5;
+    line-height: 1.6;
     min-height: 2.75rem;
-    max-height: 120px;
+    max-height: 200px;
     color: var(--text-primary);
+    overflow-y: hidden;
+    display: block;
 }
 
 .chat-input:focus {
