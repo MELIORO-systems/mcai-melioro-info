@@ -117,6 +117,8 @@ async function sendMessage() {
             errorMessage = 'Překročen limit požadavků. Zkuste to později.';
         } else if (error.message.includes('Failed to fetch')) {
             errorMessage = 'Chyba připojení k internetu.';
+        } else if (error.message.includes('assistant') || error.message.includes('Assistant')) {
+            errorMessage = 'Chyba Assistant API. Zkontrolujte ASSISTANT_ID v config.js.';
         }
         
         if (window.uiManager) {
@@ -329,7 +331,11 @@ window.chatSystem = {
     messages: messages,
     sendMessage: sendMessage,
     config: CONFIG,
-    clearMessages: () => { messages = []; }
+    clearMessages: () => { 
+        messages = []; 
+        assistantThreadId = null; // Reset thread při clear
+    },
+    mode: CONFIG.MODE
 };
 
 // Zachování kompatibility
