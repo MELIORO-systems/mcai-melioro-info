@@ -1,7 +1,10 @@
 // Konfigurace aplikace - My AI Chat
 
 const CONFIG = {
-    // API nastavení
+    // HLAVNÍ PŘEPÍNAČ REŽIMU
+    MODE: "knowledge", // "knowledge" = s knowledge base, "agent" = vlastní agent/assistant
+    
+    // API nastavení pro KNOWLEDGE režim
     API: {
         OPENAI: {
             // API klíč - v produkci nahradit skutečným klíčem
@@ -13,6 +16,22 @@ const CONFIG = {
             // Systémový prompt - definuje chování chatbota
             SYSTEM_PROMPT: "Jsi AI asistent společnosti MELIORO Systems. Odpovídáš profesionálně a přátelsky na otázky o našich službách, produktech a firmě. Vždy se snaž být konkrétní a nápomocný. Odpovídej v češtině."
         }
+    },
+    
+    // Nastavení pro AGENT režim
+    AGENT: {
+        TYPE: "assistant", // "assistant" = OpenAI Assistant API, "custom-gpt" = Custom GPT (budoucnost)
+        API_KEY: "", // Stejný nebo jiný API klíč pro agenta
+        ASSISTANT_ID: "", // ID vašeho assistanta, např. "asst_abc123..."
+        // Pro Assistant API není potřeba system prompt ani knowledge base
+        // Assistant už má vše nastavené přímo v OpenAI
+        
+        // JAK VYTVOŘIT ASSISTANTA:
+        // 1. Jděte na https://platform.openai.com/assistants
+        // 2. Klikněte na "Create assistant"
+        // 3. Nastavte jméno, instrukce a knowledge (soubory)
+        // 4. Zkopírujte Assistant ID (začíná "asst_")
+        // 5. Vložte ID výše a změňte MODE na "agent"
     },
     
     // UI nastavení
