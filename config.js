@@ -5,7 +5,7 @@ const CONFIG = {
     API: {
         OPENAI: {
             // API klíč - v produkci nahradit skutečným klíčem
-            API_KEY: "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", // Zde vložit váš OpenAI API klíč
+            API_KEY: "", // Zde vložit váš OpenAI API klíč
             MODEL: "gpt-3.5-turbo",
             TEMPERATURE: 0.7,
             MAX_TOKENS: 1000,
@@ -19,7 +19,8 @@ const CONFIG = {
         DEFAULT_THEME: "claude", // claude, google, replit
         APP_TITLE: "My AI Chat",
         APP_SUBTITLE: "Váš inteligentní asistent",
-        SHOW_INDEX_BUTTON: true
+        RELOAD_BUTTON_TEXT: "Reload",
+        SHOW_RELOAD_BUTTON: true
     },
     
     // Příklady dotazů na úvodní obrazovce
