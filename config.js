@@ -34,7 +34,8 @@ const CONFIG = {
     
     // Zprávy aplikace
     MESSAGES: {
-        WELCOME: "Vítejte! Jsem váš AI asistent. Zeptejte se mě na cokoliv.",
+        WELCOME_TITLE: "Vítejte v AI Chatu",
+        WELCOME_SUBTITLE: "Zeptejte se mě na cokoliv o našich službách a produktech",
         ERROR: "Omlouvám se, nastala chyba. Zkuste to prosím znovu.",
         NO_API_KEY: "Není nastaven API klíč. Kontaktujte administrátora.",
         LOADING: "Přemýšlím..."
