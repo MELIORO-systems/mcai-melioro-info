@@ -5,7 +5,7 @@ const CONFIG = {
     API: {
         OPENAI: {
             // API klíč - v produkci nahradit skutečným klíčem
-            API_KEY: "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", // Zde vložit váš OpenAI API klíč
+            API_KEY: "", // Zde vložit váš OpenAI API klíč
             // Příklad: API_KEY: "sk-proj-abcd1234...",
             MODEL: "gpt-3.5-turbo",
             TEMPERATURE: 0.7,
@@ -43,15 +43,18 @@ const CONFIG = {
         LOADING: "Přemýšlím..."
     },
     
-    // Budoucí rozšíření - znalostní báze
+    // Znalostní báze
     KNOWLEDGE_BASE: {
-        ENABLED: false,
-        SOURCES: [
-            // {type: "text", path: "./knowledge/about-us.txt"},
-            // {type: "text", path: "./knowledge/services.txt"},
-            // {type: "text", path: "./knowledge/products.txt"},
-            // {type: "pdf", path: "./knowledge/catalog.pdf"}
-        ]
+        ENABLED: true,
+        FILE_PREFIX: "knowledge-",
+        FILES: [
+            { name: "company", description: "Informace o společnosti" },
+            { name: "services", description: "Naše služby" },
+            { name: "products", description: "Naše produkty" },
+            { name: "contacts", description: "Kontaktní údaje" }
+        ],
+        // Jak prezentovat knowledge v promptu
+        CONTEXT_TEMPLATE: "Zde jsou informace o naší společnosti, které používej při odpovídání:\n\n{knowledge}\n\nVždy odpovídej na základě těchto informací."
     },
     
     // Ochrana proti spamu
