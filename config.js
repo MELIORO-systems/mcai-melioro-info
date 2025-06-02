@@ -5,7 +5,7 @@ const CONFIG = {
     API: {
         OPENAI: {
             // API klíč - v produkci nahradit skutečným klíčem
-            API_KEY: "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", // Zde vložit váš OpenAI API klíč
+            API_KEY: "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", // Zde vložit váš OpenAI API klíč
             // Příklad: API_KEY: "sk-proj-abcd1234...",
             MODEL: "gpt-3.5-turbo",
             TEMPERATURE: 0.7,
