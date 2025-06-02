@@ -6,6 +6,7 @@ const CONFIG = {
         OPENAI: {
             // API klíč - v produkci nahradit skutečným klíčem
             API_KEY: "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", // Zde vložit váš OpenAI API klíč
+            // Příklad: API_KEY: "sk-proj-abcd1234...",
             MODEL: "gpt-3.5-turbo",
             TEMPERATURE: 0.7,
             MAX_TOKENS: 1000,
@@ -38,7 +39,7 @@ const CONFIG = {
         WELCOME_TITLE: "Vítejte v AI Chatu",
         WELCOME_SUBTITLE: "Zeptejte se mě na cokoliv o našich službách a produktech",
         ERROR: "Omlouvám se, nastala chyba. Zkuste to prosím znovu.",
-        NO_API_KEY: "Není nastaven API klíč. Kontaktujte administrátora.",
+        NO_API_KEY: "API klíč není nastaven. Přidejte váš OpenAI API klíč do souboru config.js.",
         LOADING: "Přemýšlím..."
     },
     
