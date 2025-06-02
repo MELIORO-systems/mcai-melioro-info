@@ -4,6 +4,46 @@
 let messages = [];
 let rateLimitCounter = 0;
 let rateLimitTimer = null;
+let knowledgeBase = ""; // Uložená znalostní báze
+
+// Načíst znalostní bázi
+async function loadKnowledgeBase() {
+    if (!CONFIG.KNOWLEDGE_BASE.ENABLED) {
+        console.log('📚 Knowledge base is disabled');
+        return;
+    }
+    
+    console.log('📚 Loading knowledge base...');
+    let loadedFiles = 0;
+    let allKnowledge = "";
+    
+    for (const file of CONFIG.KNOWLEDGE_BASE.FILES) {
+        try {
+            const filename = `${CONFIG.KNOWLEDGE_BASE.FILE_PREFIX}${file.name}.txt`;
+            const response = await fetch(filename);
+            
+            if (response.ok) {
+                const content = await response.text();
+                if (content.trim()) {
+                    allKnowledge += `\n\n=== ${file.description.toUpperCase()} ===\n${content}`;
+                    loadedFiles++;
+                    console.log(`✅ Loaded: ${filename}`);
+                }
+            } else {
+                console.warn(`⚠️ Could not load: ${filename}`);
+            }
+        } catch (error) {
+            console.warn(`⚠️ Error loading ${file.name}:`, error);
+        }
+    }
+    
+    if (loadedFiles > 0) {
+        knowledgeBase = CONFIG.KNOWLEDGE_BASE.CONTEXT_TEMPLATE.replace('{knowledge}', allKnowledge);
+        console.log(`✅ Knowledge base ready (${loadedFiles} files loaded)`);
+    } else {
+        console.warn('⚠️ No knowledge files were loaded');
+    }
+}
 
 // Odeslání zprávy
 async function sendMessage() {
@@ -85,6 +125,12 @@ async function sendMessage() {
 
 // Volání OpenAI API
 async function callOpenAI(messageHistory) {
+    // Sestavit systémový prompt s knowledge base
+    let systemPrompt = CONFIG.API.OPENAI.SYSTEM_PROMPT;
+    if (knowledgeBase) {
+        systemPrompt = `${CONFIG.API.OPENAI.SYSTEM_PROMPT}\n\n${knowledgeBase}`;
+    }
+    
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -96,7 +142,7 @@ async function callOpenAI(messageHistory) {
             messages: [
                 {
                     role: "system",
-                    content: CONFIG.API.OPENAI.SYSTEM_PROMPT
+                    content: systemPrompt
                 },
                 ...messageHistory
             ],
@@ -132,6 +178,9 @@ function checkRateLimit() {
 // Inicializace aplikace
 async function initApp() {
     console.log('🚀 Starting My AI Chat...');
+    
+    // Načíst knowledge base
+    await loadKnowledgeBase();
     
     // Kontrola API klíče při startu
     if (!CONFIG.API.OPENAI.API_KEY) {
