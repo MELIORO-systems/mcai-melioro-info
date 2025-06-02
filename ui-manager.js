@@ -128,7 +128,8 @@ class UIManager {
     
     // Přidat zprávu do chatu
     addMessage(role, content) {
-        console.log('Adding message:', role, content.substring(0, 50) + '...');
+        const preview = content.length > 50 ? content.substring(0, 50) + '...' : content;
+        console.log(`💬 Adding ${role} message:`, preview);
         
         // Odstranit loading zprávu pokud přidáváme assistant zprávu
         if (role === 'assistant') {
