@@ -1,0 +1,46 @@
+MELIORO CRM
+- Kompletní CRM systém pro správu zákazníků
+- Správa kontaktů, obchodních případů a aktivit
+- Automatizace prodejních procesů
+- Integrace s e-mailem a kalendářem
+- Mobilní aplikace zdarma
+- Cena: 490 Kč/uživatel/měsíc
+
+MELIORO CHAT
+- AI chatbot pro váš web
+- Odpovídá na dotazy 24/7
+- Učí se z vašich dat
+- Podpora češtiny
+- Snadná integrace (copy & paste)
+- Cena: 1 990 Kč/měsíc
+
+MELIORO ANALYTICS
+- Pokročilé analýzy návštěvnosti
+- Real-time dashboardy
+- Predikce chování zákazníků
+- A/B testování
+- Exporty a automatické reporty
+- Cena: 990 Kč/měsíc
+
+MELIORO FORMS
+- Vytváření formulářů bez programování
+- Drag & drop editor
+- Podmíněná logika
+- Integrace s e-mailem a CRM
+- GDPR compliant
+- Cena: 390 Kč/měsíc
+
+MELIORO INVOICE
+- Fakturační systém online
+- Automatické generování faktur
+- Správa klientů a produktů
+- Napojení na účetní systémy
+- Mobilní aplikace
+- Cena: 290 Kč/měsíc
+
+CUSTOM ŘEŠENÍ
+- Produkty na míru podle vašich požadavků
+- Kombinace funkcí z různých produktů
+- Speciální integrace
+- White-label možnost
+- Cena: individuální kalkulace
