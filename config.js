@@ -2,7 +2,7 @@
 
 const CONFIG = {
     // HLAVNÍ PŘEPÍNAČ REŽIMU
-    MODE: "agent", // "knowledge" = s knowledge base, "agent" = vlastní agent/assistant
+    MODE: "knowledge", // "knowledge" = s knowledge base, "agent" = vlastní agent/assistant
     
     // API nastavení pro KNOWLEDGE režim
     API: {
