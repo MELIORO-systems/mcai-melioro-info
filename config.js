@@ -21,7 +21,7 @@ const CONFIG = {
         OPENAI: {
             // API klíč je nyní bezpečně uložen v Cloudflare Worker
             // API_KEY: "sk-proj-...", // ODSTRANĚNO - není potřeba
-            MODEL: "gpt-3.5-turbo",
+            MODEL: "gpt-4o-mini",  // Změněno z gpt-3.5-turbo
             TEMPERATURE: 0.7,
             MAX_TOKENS: 1000,
             // Systémový prompt - definuje chování chatbota
@@ -34,7 +34,7 @@ const CONFIG = {
         TYPE: "assistant", // "assistant" = OpenAI Assistant API, "custom-gpt" = Custom GPT (budoucnost)
         // API klíč je nyní bezpečně uložen v Cloudflare Worker
         // API_KEY: "sk-proj-...", // ODSTRANĚNO - není potřeba
-        ASSISTANT_ID: "proj_Vt8QHWDvpKdHf1MxEDZdgRlS", // ID vašeho assistanta, např. "asst_abc123..."
+        ASSISTANT_ID: "asst_zTqY6AIGJZUprgy04VK2Bw0S", // ID vašeho assistanta, např. "asst_abc123..."
         
         // JAK VYTVOŘIT ASSISTANTA:
         // 1. Jděte na https://platform.openai.com/assistants
