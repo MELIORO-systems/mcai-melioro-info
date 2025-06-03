@@ -2,13 +2,13 @@
 
 const CONFIG = {
     // HLAVNÍ PŘEPÍNAČ REŽIMU
-    MODE: "knowledge", // "knowledge" = s knowledge base, "agent" = vlastní agent/assistant
+    MODE: "agent", // "knowledge" = s knowledge base, "agent" = vlastní agent/assistant
     
     // API nastavení pro KNOWLEDGE režim
     API: {
         OPENAI: {
             // API klíč - v produkci nahradit skutečným klíčem
-            API_KEY: "", // Zde vložit váš OpenAI API klíč
+            API_KEY: "sk-proj-Vc9pQxICiLuY_-OSQ6kW3T9veszAytpLLSeb7G4V0vLu1XqHY12FyZnLKO0G8XpGHVZLIhynv1T3BlbkFJoB6Bd2ySJi_Om3OvMXXxxbzxy3OUPUAt0TMvCynctupZ3DlcF057uITUBmkzEcIB0RdDVUgMkA", // Zde vložit váš OpenAI API klíč
             // Příklad: API_KEY: "sk-proj-abcd1234...",
             MODEL: "gpt-3.5-turbo",
             TEMPERATURE: 0.7,
