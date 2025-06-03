@@ -21,7 +21,7 @@ const CONFIG = {
     // Nastavení pro AGENT režim
     AGENT: {
         TYPE: "assistant", // "assistant" = OpenAI Assistant API, "custom-gpt" = Custom GPT (budoucnost)
-        API_KEY: "", // Stejný nebo jiný API klíč pro agenta
+        API_KEY: "sk-proj-Vc9pQxICiLuY_-OSQ6kW3T9veszAytpLLSeb7G4V0vLu1XqHY12FyZnLKO0G8XpGHVZLIhynv1T3BlbkFJoB6Bd2ySJi_Om3OvMXXxxbzxy3OUPUAt0TMvCynctupZ3DlcF057uITUBmkzEcIB0RdDVUgMkA", // Stejný nebo jiný API klíč pro agenta
         ASSISTANT_ID: "", // ID vašeho assistanta, např. "asst_abc123..."
         // Pro Assistant API není potřeba system prompt ani knowledge base
         // Assistant už má vše nastavené přímo v OpenAI
