@@ -7,7 +7,7 @@ const CONFIG = {
     // === PROXY NASTAVENÍ ===
     PROXY: {
         // URL vašeho Cloudflare Workeru
-        URL: "https://ai-chat-proxy.pavel-cz.workers.dev",
+        URL: "https://ai-chat-proxy.pavel-2ce.workers.dev",
         
         // Endpoints pro různé služby
         ENDPOINTS: {
