@@ -1,4 +1,4 @@
-// Hlavní aplikační logika - My AI Chat - Zjednodušená verze
+// Hlavní aplikační logika - My AI Chat - Verze s proxy
 
 // Globální proměnné
 let messages = [];
@@ -62,15 +62,6 @@ async function sendMessage() {
         return;
     }
     
-    // Kontrola API klíče
-    const apiKey = CONFIG.MODE === "agent" ? CONFIG.AGENT.API_KEY : CONFIG.API.OPENAI.API_KEY;
-    if (!apiKey) {
-        if (window.uiManager) {
-            window.uiManager.addMessage('error', CONFIG.MESSAGES.NO_API_KEY);
-        }
-        return;
-    }
-    
     // Přidat uživatelovu zprávu
     if (window.uiManager) {
         window.uiManager.addMessage('user', messageText);
@@ -93,11 +84,11 @@ async function sendMessage() {
     try {
         let response;
         
-        // Volání podle zvoleného režimu
+        // Volání podle zvoleného režimu - NYNí PŘES PROXY
         if (CONFIG.MODE === "agent") {
-            response = await callAssistant(messageText);
+            response = await callAssistantViaProxy(messageText);
         } else {
-            response = await callOpenAI(messages);
+            response = await callOpenAIViaProxy(messages);
         }
         
         // Přidat odpověď
@@ -112,7 +103,7 @@ async function sendMessage() {
         
         // Specifické chybové hlášky
         if (error.message.includes('401')) {
-            errorMessage = 'Neplatný API klíč. Zkontrolujte nastavení.';
+            errorMessage = 'Neplatný API klíč. Zkontrolujte nastavení v Cloudflare.';
         } else if (error.message.includes('429')) {
             errorMessage = 'Překročen limit požadavků. Zkuste to později.';
         } else if (error.message.includes('Failed to fetch')) {
@@ -133,38 +124,41 @@ async function sendMessage() {
     }
 }
 
-// Volání OpenAI Assistant API
-async function callAssistant(userMessage) {
-    console.log('🔐 Using API Key:', CONFIG.AGENT.API_KEY.substring(0, 10) + '...');
-    console.log('🤖 Assistant ID:', CONFIG.AGENT.ASSISTANT_ID);
+// Volání OpenAI Assistant API přes proxy
+async function callAssistantViaProxy(userMessage) {
+    console.log('🤖 Using Assistant mode via proxy');
+    console.log('🔗 Proxy URL:', CONFIG.PROXY.URL);
+    console.log('📝 Assistant ID:', CONFIG.AGENT.ASSISTANT_ID);
+    console.log('📤 Message:', userMessage.substring(0, 50) + '...');
     
     // 1. Vytvořit thread pokud neexistuje
     if (!assistantThreadId) {
-        const threadResponse = await fetch("https://api.openai.com/v1/threads", {
+        console.log('🔄 Creating new thread...');
+        const threadResponse = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.ASSISTANT}/threads`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${CONFIG.AGENT.API_KEY}`,
-                "OpenAI-Beta": "assistants=v2"
+                "Content-Type": "application/json"
             }
         });
         
+        console.log('📥 Thread creation response:', threadResponse.status);
+        
         if (!threadResponse.ok) {
-            throw new Error(`Assistant API error: ${threadResponse.status}`);
+            const errorData = await threadResponse.json();
+            console.error('❌ Thread creation error:', errorData);
+            throw new Error(`Assistant API error: ${errorData.error || threadResponse.status}`);
         }
         
         const threadData = await threadResponse.json();
         assistantThreadId = threadData.id;
-        console.log('📋 Created thread:', assistantThreadId);
+        console.log('✅ Created thread:', assistantThreadId);
     }
     
     // 2. Přidat zprávu do threadu
-    await fetch(`https://api.openai.com/v1/threads/${assistantThreadId}/messages`, {
+    await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.ASSISTANT}/threads/${assistantThreadId}/messages`, {
         method: "POST",
         headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${CONFIG.AGENT.API_KEY}`,
-            "OpenAI-Beta": "assistants=v2"
+            "Content-Type": "application/json"
         },
         body: JSON.stringify({
             role: "user",
@@ -173,12 +167,10 @@ async function callAssistant(userMessage) {
     });
     
     // 3. Spustit assistanta
-    const runResponse = await fetch(`https://api.openai.com/v1/threads/${assistantThreadId}/runs`, {
+    const runResponse = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.ASSISTANT}/threads/${assistantThreadId}/runs`, {
         method: "POST",
         headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${CONFIG.AGENT.API_KEY}`,
-            "OpenAI-Beta": "assistants=v2"
+            "Content-Type": "application/json"
         },
         body: JSON.stringify({
             assistant_id: CONFIG.AGENT.ASSISTANT_ID
@@ -186,7 +178,8 @@ async function callAssistant(userMessage) {
     });
     
     if (!runResponse.ok) {
-        throw new Error(`Assistant run error: ${runResponse.status}`);
+        const errorData = await runResponse.json();
+        throw new Error(`Assistant run error: ${errorData.error || runResponse.status}`);
     }
     
     const runData = await runResponse.json();
@@ -198,11 +191,11 @@ async function callAssistant(userMessage) {
         await new Promise(resolve => setTimeout(resolve, 1000)); // Čekat 1s
         
         const statusResponse = await fetch(
-            `https://api.openai.com/v1/threads/${assistantThreadId}/runs/${runId}`,
+            `${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.ASSISTANT}/threads/${assistantThreadId}/runs/${runId}`,
             {
+                method: "GET",
                 headers: {
-                    "Authorization": `Bearer ${CONFIG.AGENT.API_KEY}`,
-                    "OpenAI-Beta": "assistants=v2"
+                    "Content-Type": "application/json"
                 }
             }
         );
@@ -213,11 +206,11 @@ async function callAssistant(userMessage) {
     
     // 5. Získat odpověď
     const messagesResponse = await fetch(
-        `https://api.openai.com/v1/threads/${assistantThreadId}/messages`,
+        `${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.ASSISTANT}/threads/${assistantThreadId}/messages`,
         {
+            method: "GET",
             headers: {
-                "Authorization": `Bearer ${CONFIG.AGENT.API_KEY}`,
-                "OpenAI-Beta": "assistants=v2"
+                "Content-Type": "application/json"
             }
         }
     );
@@ -228,39 +221,58 @@ async function callAssistant(userMessage) {
     return lastMessage.content[0].text.value;
 }
 
-// Volání OpenAI API
-async function callOpenAI(messageHistory) {
+// Volání OpenAI API přes proxy
+async function callOpenAIViaProxy(messageHistory) {
+    console.log('💬 Using Knowledge mode via proxy');
+    console.log('🔗 Proxy URL:', CONFIG.PROXY.URL);
+    console.log('📤 Sending request to:', `${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.CHAT}`);
+    
     // Sestavit systémový prompt s knowledge base
     let systemPrompt = CONFIG.API.OPENAI.SYSTEM_PROMPT;
     if (knowledgeBase) {
         systemPrompt = `${CONFIG.API.OPENAI.SYSTEM_PROMPT}\n\n${knowledgeBase}`;
+        console.log('📚 Knowledge base included in prompt');
     }
     
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const requestPayload = {
+        model: CONFIG.API.OPENAI.MODEL,
+        messages: [
+            {
+                role: "system",
+                content: systemPrompt
+            },
+            ...messageHistory
+        ],
+        temperature: CONFIG.API.OPENAI.TEMPERATURE,
+        max_tokens: CONFIG.API.OPENAI.MAX_TOKENS
+    };
+    
+    console.log('📊 Request details:');
+    console.log('  - Model:', requestPayload.model);
+    console.log('  - Messages count:', requestPayload.messages.length);
+    console.log('  - Temperature:', requestPayload.temperature);
+    console.log('  - Max tokens:', requestPayload.max_tokens);
+    
+    const response = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.CHAT}`, {
         method: "POST",
         headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${CONFIG.API.OPENAI.API_KEY}`
+            "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-            model: CONFIG.API.OPENAI.MODEL,
-            messages: [
-                {
-                    role: "system",
-                    content: systemPrompt
-                },
-                ...messageHistory
-            ],
-            temperature: CONFIG.API.OPENAI.TEMPERATURE,
-            max_tokens: CONFIG.API.OPENAI.MAX_TOKENS
-        })
+        body: JSON.stringify(requestPayload)
     });
     
+    console.log('📥 Response status:', response.status);
+    
     if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status}`);
+        const errorData = await response.json();
+        console.error('❌ API Error details:', errorData);
+        throw new Error(`OpenAI API error: ${errorData.error || response.status}`);
     }
     
     const data = await response.json();
+    console.log('✅ Response received successfully');
+    console.log('📝 Response preview:', data.choices[0].message.content.substring(0, 100) + '...');
+    
     return data.choices[0].message.content;
 }
 
@@ -284,18 +296,13 @@ function checkRateLimit() {
 async function initApp() {
     console.log('🚀 Starting My AI Chat...');
     console.log(`🤖 Mode: ${CONFIG.MODE}`);
+    console.log(`🔐 Using proxy: ${CONFIG.PROXY.URL}`);
     
     // Načíst knowledge base pouze v knowledge režimu
     if (CONFIG.MODE === "knowledge") {
         await loadKnowledgeBase();
     } else if (CONFIG.MODE === "agent") {
         console.log('🤖 Using Assistant:', CONFIG.AGENT.ASSISTANT_ID || 'Not configured');
-    }
-    
-    // Kontrola API klíče při startu
-    const apiKey = CONFIG.MODE === "agent" ? CONFIG.AGENT.API_KEY : CONFIG.API.OPENAI.API_KEY;
-    if (!apiKey) {
-        console.warn('⚠️ API key is not set in config.js');
     }
     
     // Nastavit téma
@@ -320,7 +327,7 @@ async function initApp() {
         reloadButton.style.display = CONFIG.UI.SHOW_RELOAD_BUTTON ? 'block' : 'none';
     }
     
-    console.log('✅ My AI Chat ready');
+    console.log('✅ My AI Chat ready with proxy protection');
 }
 
 // Spuštění aplikace
