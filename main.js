@@ -135,22 +135,18 @@ async function sendMessage() {
 
 // Volání OpenAI Assistant API
 async function callAssistant(userMessage) {
-    const WORKER_URL = "https://ai-chat-proxy.pavel36.workers.dev";
-    
-    console.log('🔐 Using Worker for Assistant API');
+    console.log('🔐 Using API Key:', CONFIG.AGENT.API_KEY.substring(0, 10) + '...');
     console.log('🤖 Assistant ID:', CONFIG.AGENT.ASSISTANT_ID);
     
     // 1. Vytvořit thread pokud neexistuje
     if (!assistantThreadId) {
-        const threadResponse = await fetch(WORKER_URL, {
+        const threadResponse = await fetch("https://api.openai.com/v1/threads", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                endpoint: "threads",
-                method: "POST"
-            })
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${CONFIG.AGENT.API_KEY}`,
+                "OpenAI-Beta": "assistants=v2"
+            }
         });
         
         if (!threadResponse.ok) {
@@ -163,33 +159,29 @@ async function callAssistant(userMessage) {
     }
     
     // 2. Přidat zprávu do threadu
-    await fetch(WORKER_URL, {
+    await fetch(`https://api.openai.com/v1/threads/${assistantThreadId}/messages`, {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${CONFIG.AGENT.API_KEY}`,
+            "OpenAI-Beta": "assistants=v2"
         },
         body: JSON.stringify({
-            endpoint: `threads/${assistantThreadId}/messages`,
-            method: "POST",
-            data: {
-                role: "user",
-                content: userMessage
-            }
+            role: "user",
+            content: userMessage
         })
     });
     
     // 3. Spustit assistanta
-    const runResponse = await fetch(WORKER_URL, {
+    const runResponse = await fetch(`https://api.openai.com/v1/threads/${assistantThreadId}/runs`, {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${CONFIG.AGENT.API_KEY}`,
+            "OpenAI-Beta": "assistants=v2"
         },
         body: JSON.stringify({
-            endpoint: `threads/${assistantThreadId}/runs`,
-            method: "POST",
-            data: {
-                assistant_id: CONFIG.AGENT.ASSISTANT_ID
-            }
+            assistant_id: CONFIG.AGENT.ASSISTANT_ID
         })
     });
     
@@ -203,34 +195,32 @@ async function callAssistant(userMessage) {
     // 4. Čekat na dokončení
     let runStatus = "in_progress";
     while (runStatus === "in_progress" || runStatus === "queued") {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Čekat 1s
         
-        const statusResponse = await fetch(WORKER_URL, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                endpoint: `threads/${assistantThreadId}/runs/${runId}`,
-                method: "GET"
-            })
-        });
+        const statusResponse = await fetch(
+            `https://api.openai.com/v1/threads/${assistantThreadId}/runs/${runId}`,
+            {
+                headers: {
+                    "Authorization": `Bearer ${CONFIG.AGENT.API_KEY}`,
+                    "OpenAI-Beta": "assistants=v2"
+                }
+            }
+        );
         
         const statusData = await statusResponse.json();
         runStatus = statusData.status;
     }
     
     // 5. Získat odpověď
-    const messagesResponse = await fetch(WORKER_URL, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            endpoint: `threads/${assistantThreadId}/messages`,
-            method: "GET"
-        })
-    });
+    const messagesResponse = await fetch(
+        `https://api.openai.com/v1/threads/${assistantThreadId}/messages`,
+        {
+            headers: {
+                "Authorization": `Bearer ${CONFIG.AGENT.API_KEY}`,
+                "OpenAI-Beta": "assistants=v2"
+            }
+        }
+    );
     
     const messagesData = await messagesResponse.json();
     const lastMessage = messagesData.data[0];
@@ -240,19 +230,17 @@ async function callAssistant(userMessage) {
 
 // Volání OpenAI API
 async function callOpenAI(messageHistory) {
-    // Vaše worker URL
-    const WORKER_URL = "https://ai-chat-proxy.pavel36.workers.dev";
-    
     // Sestavit systémový prompt s knowledge base
     let systemPrompt = CONFIG.API.OPENAI.SYSTEM_PROMPT;
     if (knowledgeBase) {
         systemPrompt = `${CONFIG.API.OPENAI.SYSTEM_PROMPT}\n\n${knowledgeBase}`;
     }
     
-    const response = await fetch(WORKER_URL, {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${CONFIG.API.OPENAI.API_KEY}`
         },
         body: JSON.stringify({
             model: CONFIG.API.OPENAI.MODEL,
@@ -269,9 +257,7 @@ async function callOpenAI(messageHistory) {
     });
     
     if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Worker error:', errorData);
-        throw new Error(`API error: ${response.status}`);
+        throw new Error(`OpenAI API error: ${response.status}`);
     }
     
     const data = await response.json();
