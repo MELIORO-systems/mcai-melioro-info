@@ -1,25 +1,28 @@
 // Konfigurace aplikace - My AI Chat
 
 const CONFIG = {
-    // API nastavení
+    // HLAVNÍ PŘEPÍNAČ REŽIMU
+    MODE: "knowledge", // "knowledge" = s knowledge base, "agent" = vlastní agent/assistant
+    
+    // API nastavení pro KNOWLEDGE režim
     API: {
         OPENAI: {
-            // API klíč už není potřeba - používáme Cloudflare Worker
+            // API klíč - v produkci nahradit skutečným klíčem
+            API_KEY: "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", // Zde vložit váš OpenAI API klíč
+            // Příklad: API_KEY: "sk-proj-abcd1234...",
             MODEL: "gpt-3.5-turbo",
             TEMPERATURE: 0.7,
             MAX_TOKENS: 1000,
             // Systémový prompt - definuje chování chatbota
             SYSTEM_PROMPT: "Jsi AI asistent společnosti MELIORO Systems. Odpovídáš profesionálně a přátelsky na otázky o našich službách, produktech a firmě. Vždy se snaž být konkrétní a nápomocný. Odpovídej v češtině."
         }
-    },."
-        }
     },
     
     // Nastavení pro AGENT režim
     AGENT: {
         TYPE: "assistant", // "assistant" = OpenAI Assistant API, "custom-gpt" = Custom GPT (budoucnost)
-        API_KEY: "", // Stejný nebo jiný API klíč pro agenta
-        ASSISTANT_ID: "", // ID vašeho assistanta, např. "asst_abc123..."
+        API_KEY: "sk-proj-Vc9pQxICiLuY_-OSQ6kW3T9veszAytpLLSeb7G4V0vLu1XqHY12FyZnLKO0G8XpGHVZLIhynv1T3BlbkFJoB6Bd2ySJi_Om3OvMXXxxbzxy3OUPUAt0TMvCynctupZ3DlcF057uITUBmkzEcIB0RdDVUgMkA", // Stejný nebo jiný API klíč pro agenta
+        ASSISTANT_ID: "asst_zTqY6AIGJZUprgy04VK2Bw0S", // ID vašeho assistanta, např. "asst_abc123..."
         // Pro Assistant API není potřeba system prompt ani knowledge base
         // Assistant už má vše nastavené přímo v OpenAI
         
