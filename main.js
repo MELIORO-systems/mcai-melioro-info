@@ -135,6 +135,9 @@ async function sendMessage() {
 
 // Volání OpenAI Assistant API
 async function callAssistant(userMessage) {
+    console.log('🔐 Using API Key:', CONFIG.AGENT.API_KEY.substring(0, 10) + '...');
+    console.log('🤖 Assistant ID:', CONFIG.AGENT.ASSISTANT_ID);
+    
     // 1. Vytvořit thread pokud neexistuje
     if (!assistantThreadId) {
         const threadResponse = await fetch("https://api.openai.com/v1/threads", {
