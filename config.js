@@ -3,10 +3,10 @@
 
 const CONFIG = {
     // === VERZE KONFIGURACE ===
-    VERSION: "1.3",
+    VERSION: "1.2",
     LAST_UPDATE: new Date().toISOString(),
     // HLAVNÍ PŘEPÍNAČ REŽIMU
-    MODE: "agent", // "knowledge" = s knowledge base (používá OPENAI_API_KEY_KNOWLEDGE)
+    MODE: "knowledge", // "knowledge" = s knowledge base (používá OPENAI_API_KEY_KNOWLEDGE)
                       // "agent" = vlastní assistant (používá OPENAI_API_KEY_AGENT)
     
     // === PROXY NASTAVENÍ ===
@@ -39,21 +39,70 @@ const CONFIG = {
         // ID vašeho OpenAI assistanta (ano, OpenAI to stále nazývá "assistant")
         AGENT_ID: "asst_zTqY6AIGJZUprgy04VK2Bw0S",
         
+        // Nastavení časování
+        POLLING_INTERVAL: 500,  // ms mezi kontrolami stavu (500 = 2x rychlejší)
+        MAX_WAIT_TIME: 30000,   // max čekání v ms (30 sekund)
+        
         // JAK VYTVOŘIT AGENTA:
         // 1. Jděte na https://platform.openai.com/assistants
         // 2. Klikněte na "Create assistant"
-        // 3. Nastavte jméno, instrukce a knowledge (soubory)
-        // 4. Zkopírujte Assistant ID (začíná "asst_")
-        // 5. Vložte ID výše a změňte MODE na "agent"
+        // 3. Nastavte KRÁTKÉ instrukce (max 500 znaků)
+        // 4. Nepoužívejte tools/functions (zpomalují)
+        // 5. Knowledge files max 1-2 malé soubory
+        // 6. Zkopírujte Assistant ID (začíná "asst_")
+        // 7. Vložte ID výše a změňte MODE na "agent"
     },
     
     // UI nastavení
     UI: {
-        DEFAULT_THEME: "claude", // claude, google, replit
+        DEFAULT_THEME: "claude", // claude, google, replit, carrd
+        
+        // Texty v aplikaci
+        PAGE_TITLE: "AI Chat Assistant",
         APP_TITLE: "My AI Chat",
         APP_SUBTITLE: "Váš inteligentní asistent",
+        
+        // Tlačítka
         RELOAD_BUTTON_TEXT: "Reload",
-        SHOW_RELOAD_BUTTON: true
+        RELOAD_BUTTON_TOOLTIP: "Znovu načíst chat",
+        SEND_BUTTON_TEXT: "Odeslat",
+        SHOW_RELOAD_BUTTON: true,
+        
+        // Input
+        INPUT_PLACEHOLDER: "Napište svůj dotaz...",
+        
+        // Témata
+        THEMES: {
+            claude: {
+                name: "Claude",
+                tooltip: "Claude téma",
+                description: "Výchozí světlé téma"
+            },
+            google: {
+                name: "Google", 
+                tooltip: "Google téma",
+                description: "Čisté téma ve stylu Google"
+            },
+            replit: {
+                name: "Replit",
+                tooltip: "Tmavé téma",
+                description: "Tmavé téma pro noční práci"
+            },
+            carrd: {
+                name: "Carrd",
+                tooltip: "Carrd téma",
+                description: "Moderní téma s neonovými akcenty"
+            }
+        },
+        
+        // Patička
+        FOOTER: {
+            POWERED_BY_TEXT: "Powered by",
+            COMPANY_NAME: "MELIORO Systems",
+            COMPANY_URL: "http://melioro.cz",
+            RETURN_TEXT: "Návrat na stránky",
+            RETURN_LINK_TEXT: "MELIORO"
+        }
     },
     
     // Příklady dotazů na úvodní obrazovce
