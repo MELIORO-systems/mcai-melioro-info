@@ -2,7 +2,7 @@
 
 const CONFIG = {
     // HLAVNÍ PŘEPÍNAČ REŽIMU
-    MODE: "knowledge", // "knowledge" = s knowledge base, "agent" = vlastní agent/assistant
+    MODE: "agent", // "knowledge" = s knowledge base, "agent" = vlastní agent/assistant
     
     // === PROXY NASTAVENÍ ===
     PROXY: {
