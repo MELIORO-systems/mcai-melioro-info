@@ -155,7 +155,8 @@ async function callAssistantViaProxy(userMessage) {
     }
     
     // 2. Přidat zprávu do threadu
-    await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.ASSISTANT}/threads/${assistantThreadId}/messages`, {
+    console.log('📨 Adding message to thread...');
+    const messageResponse = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.ASSISTANT}/threads/${assistantThreadId}/messages`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -166,7 +167,14 @@ async function callAssistantViaProxy(userMessage) {
         })
     });
     
+    console.log('📥 Message add response:', messageResponse.status);
+    if (!messageResponse.ok) {
+        const error = await messageResponse.json();
+        console.error('❌ Failed to add message:', error);
+    }
+    
     // 3. Spustit assistanta
+    console.log('🚀 Starting assistant run...');
     const runResponse = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.ASSISTANT}/threads/${assistantThreadId}/runs`, {
         method: "POST",
         headers: {
@@ -215,10 +223,31 @@ async function callAssistantViaProxy(userMessage) {
         }
     );
     
-    const messagesData = await messagesResponse.json();
-    const lastMessage = messagesData.data[0];
+    console.log('📥 Messages response:', messagesResponse.status);
+    if (!messagesResponse.ok) {
+        const error = await messagesResponse.json();
+        console.error('❌ Failed to get messages:', error);
+        throw new Error('Failed to retrieve assistant response');
+    }
     
-    return lastMessage.content[0].text.value;
+    const messagesData = await messagesResponse.json();
+    console.log('📬 Retrieved messages count:', messagesData.data.length);
+    
+    // Najít poslední zprávu od assistanta
+    const assistantMessages = messagesData.data.filter(msg => msg.role === 'assistant');
+    console.log('🤖 Assistant messages found:', assistantMessages.length);
+    
+    if (assistantMessages.length === 0) {
+        console.error('❌ No assistant response found');
+        console.log('All messages:', messagesData.data.map(m => ({role: m.role, content: m.content[0]?.text?.value?.substring(0, 50)})));
+        throw new Error('Assistant did not respond');
+    }
+    
+    const lastMessage = assistantMessages[0]; // Nejnovější je první
+    const responseText = lastMessage.content[0].text.value;
+    console.log('✅ Assistant response received:', responseText.substring(0, 100) + '...');
+    
+    return responseText;
 }
 
 // Volání OpenAI API přes proxy
@@ -266,7 +295,15 @@ async function callOpenAIViaProxy(messageHistory) {
     if (!response.ok) {
         const errorData = await response.json();
         console.error('❌ API Error details:', errorData);
-        throw new Error(`OpenAI API error: ${errorData.error || response.status}`);
+        console.error('❌ Full error:', JSON.stringify(errorData, null, 2));
+        
+        // Specifické chyby podle odpovědi
+        let errorMessage = errorData.error || `Status ${response.status}`;
+        if (typeof errorData.error === 'object') {
+            errorMessage = errorData.error.message || errorData.error.error || JSON.stringify(errorData.error);
+        }
+        
+        throw new Error(`OpenAI API error: ${errorMessage}`);
     }
     
     const data = await response.json();
