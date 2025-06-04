@@ -1,6 +1,10 @@
 // Konfigurace aplikace - My AI Chat
+// Verze: 1.1 - 2024-01-XX - Assistant mode debug
 
 const CONFIG = {
+    // === VERZE KONFIGURACE ===
+    VERSION: "1.1",
+    LAST_UPDATE: new Date().toISOString(),
     // HLAVNÍ PŘEPÍNAČ REŽIMU
     MODE: "agent", // "knowledge" = s knowledge base, "agent" = vlastní agent/assistant
     
