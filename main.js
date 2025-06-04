@@ -1,4 +1,7 @@
 // Hlavní aplikační logika - My AI Chat - Verze s proxy
+// Verze: 1.2 - 2024-01-XX - Rozšířené logování pro Assistant mode
+
+const APP_VERSION = "1.2";
 
 // Globální proměnné
 let messages = [];
