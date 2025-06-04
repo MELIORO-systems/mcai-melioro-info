@@ -391,9 +391,12 @@ async function initApp() {
         console.log('🤖 Using Agent:', CONFIG.AGENT.AGENT_ID || 'Not configured');
     }
     
-    // Nastavit téma
+    // OPRAVA: Načíst uložené téma, nebo použít výchozí
     if (window.uiManager) {
-        window.uiManager.setTheme(CONFIG.UI.DEFAULT_THEME);
+        const savedTheme = localStorage.getItem('selectedTheme');
+        const themeToUse = savedTheme || CONFIG.UI.DEFAULT_THEME;
+        console.log('🎨 Loading theme:', themeToUse, savedTheme ? '(saved)' : '(default)');
+        window.uiManager.setTheme(themeToUse);
     }
     
     console.log('✅ My AI Chat ready with proxy protection');
