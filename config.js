@@ -1,12 +1,12 @@
 // Konfigurace aplikace - My AI Chat
-// Verze: 1.1 - 2024-01-XX - Assistant mode debug
+// Verze: 1.2 - 2024-01-XX - Sjednocené názvy knowledge/agent
 
 const CONFIG = {
     // === VERZE KONFIGURACE ===
-    VERSION: "1.3",
+    VERSION: "1.2",
     LAST_UPDATE: new Date().toISOString(),
     // HLAVNÍ PŘEPÍNAČ REŽIMU
-    MODE: "agent", // "knowledge" = s knowledge base (používá OPENAI_API_KEY_KNOWLEDGE)
+    MODE: "knowledge", // "knowledge" = s knowledge base (používá OPENAI_API_KEY_KNOWLEDGE)
                       // "agent" = vlastní assistant (používá OPENAI_API_KEY_AGENT)
     
     // === PROXY NASTAVENÍ ===
@@ -16,8 +16,8 @@ const CONFIG = {
         
         // Endpoints pro různé služby
         ENDPOINTS: {
-            CHAT: "/knowledge",              // Pro knowledge mode - ZMĚNĚNO!
-            ASSISTANT: "/agent"              // Pro agent mode - ZMĚNĚNO!
+            KNOWLEDGE: "/knowledge",         // Pro knowledge mode
+            AGENT: "/agent"                  // Pro agent mode
         }
     },
     
@@ -36,12 +36,10 @@ const CONFIG = {
     
     // Nastavení pro AGENT režim
     AGENT: {
-        TYPE: "assistant", // "assistant" = OpenAI Assistant API, "custom-gpt" = Custom GPT (budoucnost)
-        // API klíč je nyní bezpečně uložen v Cloudflare Worker
-        // API_KEY: "sk-proj-...", // ODSTRANĚNO - není potřeba
-        ASSISTANT_ID: "asst_zTqY6AIGJZUprgy04VK2Bw0S", // ID vašeho assistanta, např. "asst_abc123..."
+        // ID vašeho OpenAI assistanta (ano, OpenAI to stále nazývá "assistant")
+        AGENT_ID: "asst_zTqY6AIGJZUprgy04VK2Bw0S",
         
-        // JAK VYTVOŘIT ASSISTANTA:
+        // JAK VYTVOŘIT AGENTA:
         // 1. Jděte na https://platform.openai.com/assistants
         // 2. Klikněte na "Create assistant"
         // 3. Nastavte jméno, instrukce a knowledge (soubory)
