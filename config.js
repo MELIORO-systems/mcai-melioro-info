@@ -6,7 +6,7 @@ const CONFIG = {
     VERSION: "1.2",
     LAST_UPDATE: new Date().toISOString(),
     // HLAVNÍ PŘEPÍNAČ REŽIMU
-    MODE: "knowledge", // "knowledge" = s knowledge base (používá OPENAI_API_KEY_KNOWLEDGE)
+    MODE: "agent", // "knowledge" = s knowledge base (používá OPENAI_API_KEY_KNOWLEDGE)
                       // "agent" = vlastní assistant (používá OPENAI_API_KEY_AGENT)
     
     // === PROXY NASTAVENÍ ===
