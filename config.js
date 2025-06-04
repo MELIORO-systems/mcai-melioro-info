@@ -3,7 +3,7 @@
 
 const CONFIG = {
     // === VERZE KONFIGURACE ===
-    VERSION: "1.2",
+    VERSION: "1.3",
     LAST_UPDATE: new Date().toISOString(),
     // HLAVNÍ PŘEPÍNAČ REŽIMU
     MODE: "agent", // "knowledge" = s knowledge base (používá OPENAI_API_KEY_KNOWLEDGE)
@@ -16,8 +16,8 @@ const CONFIG = {
         
         // Endpoints pro různé služby
         ENDPOINTS: {
-            CHAT: "/chat",                    // Pro knowledge mode
-            ASSISTANT: "/assistant"           // Pro agent mode
+            CHAT: "/knowledge",              // Pro knowledge mode - ZMĚNĚNO!
+            ASSISTANT: "/agent"              // Pro agent mode - ZMĚNĚNO!
         }
     },
     
