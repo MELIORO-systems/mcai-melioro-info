@@ -3,10 +3,11 @@
 
 const CONFIG = {
     // === VERZE KONFIGURACE ===
-    VERSION: "1.1",
+    VERSION: "1.2",
     LAST_UPDATE: new Date().toISOString(),
     // HLAVNÍ PŘEPÍNAČ REŽIMU
-    MODE: "agent", // "knowledge" = s knowledge base, "agent" = vlastní agent/assistant
+    MODE: "agent", // "knowledge" = s knowledge base (používá OPENAI_API_KEY_KNOWLEDGE)
+                      // "agent" = vlastní assistant (používá OPENAI_API_KEY_AGENT)
     
     // === PROXY NASTAVENÍ ===
     PROXY: {
