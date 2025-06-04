@@ -63,24 +63,24 @@
 
 /* Carrd theme */
 .theme-carrd {
-    --primary-color: #000000;
-    --primary-hover: #333333;
-    --secondary-color: #666666;
+    --primary-color: #00d9d9;
+    --primary-hover: #00ffff;
+    --secondary-color: #ff0080;
     --success-color: #00d084;
     --warning-color: #ffb900;
-    --error-color: #ff0000;
-    --background: #ffffff;
-    --surface: #ffffff;
-    --surface-hover: #f8f8f8;
-    --border: #000000;
-    --text-primary: #000000;
-    --text-secondary: #333333;
+    --error-color: #ff0080;
+    --background: #0d0f11;
+    --surface: #1a1d21;
+    --surface-hover: #242830;
+    --border: #2a2d35;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
     --text-muted: #666666;
-    --shadow-sm: none;
-    --shadow: 0 2px 4px rgba(0,0,0,0.1);
-    --shadow-lg: 0 8px 16px rgba(0,0,0,0.15);
-    --radius: 0;
-    --radius-lg: 0;
+    --shadow-sm: 0 2px 8px rgba(0, 217, 217, 0.1);
+    --shadow: 0 4px 16px rgba(0, 217, 217, 0.2);
+    --shadow-lg: 0 8px 32px rgba(0, 217, 217, 0.3);
+    --radius: 0.75rem;
+    --radius-lg: 1rem;
 }
 
 body {
@@ -226,7 +226,7 @@ body {
 }
 
 .theme-btn.theme-carrd {
-    background: linear-gradient(135deg, #ffffff 0%, #000000 100%);
+    background: linear-gradient(135deg, #00d9d9 0%, #0d0f11 100%);
 }
 
 /* === CHAT MESSAGES === */
@@ -477,102 +477,140 @@ body {
     text-decoration: underline;
 }
 
+/* Footer link colors per theme */
+.footer-link strong {
+    color: var(--primary-color);
+}
+
+.theme-google .footer-link strong {
+    color: var(--primary-color);
+}
+
+.theme-replit .footer-link strong {
+    color: var(--primary-color);
+}
+
+.theme-carrd .footer-link strong {
+    color: var(--text-primary);
+}
+
 /* === CARRD THEME SPECIFIC STYLES === */
+.theme-carrd body {
+    background: #000000;
+}
+
 .theme-carrd .chat-container {
-    border: 2px solid var(--border);
-    border-radius: 0;
-    box-shadow: none;
+    border: 1px solid var(--border);
+    background: var(--background);
+    box-shadow: 0 0 40px rgba(0, 217, 217, 0.1);
 }
 
 .theme-carrd .chat-header {
-    border-bottom: 2px solid var(--border);
+    border-bottom: 1px solid var(--border);
     background: var(--surface);
     padding: 2rem;
 }
 
 .theme-carrd .chat-header h1 {
-    font-weight: 900;
-    letter-spacing: -0.05em;
-    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .theme-carrd .header-subtitle {
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
 }
 
 .theme-carrd .index-button {
-    border: 2px solid var(--border);
+    border: 1px solid var(--primary-color);
     background: transparent;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 700;
-    transition: all 0.15s ease;
+    color: var(--primary-color);
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border-radius: 2rem;
 }
 
 .theme-carrd .index-button:hover {
-    background: var(--border);
+    background: var(--primary-color);
     color: var(--background);
+    box-shadow: 0 0 20px rgba(0, 217, 217, 0.5);
+    transform: translateY(-2px);
 }
 
 .theme-carrd .theme-btn {
-    border: 2px solid var(--border);
-    transition: all 0.15s ease;
+    border: 1px solid var(--border);
+    transition: all 0.3s ease;
+    opacity: 0.7;
 }
 
 .theme-carrd .theme-btn:hover {
-    transform: none;
-    border-width: 3px;
+    transform: scale(1.1);
+    border-color: var(--primary-color);
+    opacity: 1;
 }
 
 .theme-carrd .theme-btn.active {
-    border-width: 3px;
-    box-shadow: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(0, 217, 217, 0.5);
+    opacity: 1;
+}
+
+.theme-carrd .chat-messages {
+    background: var(--background);
 }
 
 .theme-carrd .message {
-    border-radius: 0;
+    border-radius: var(--radius-lg);
     box-shadow: none;
+    border: 1px solid var(--border);
 }
 
 .theme-carrd .user-message {
-    background: var(--border);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
     color: var(--background);
-    border: 2px solid var(--border);
+    border: none;
 }
 
 .theme-carrd .assistant-message {
     background: var(--surface);
-    border: 2px solid var(--border);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
 }
 
-.theme-carrd .system-message,
-.theme-carrd .error-message {
-    border: 2px solid currentColor;
+.theme-carrd .system-message {
     background: transparent;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-size: 0.75rem;
-    font-weight: 700;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    font-style: normal;
+}
+
+.theme-carrd .error-message {
+    background: transparent;
+    color: var(--error-color);
+    border: 1px solid var(--error-color);
 }
 
 .theme-carrd .welcome-title {
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: -0.05em;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .theme-carrd .welcome-subtitle {
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-size: 0.875rem;
+    color: var(--text-secondary);
 }
 
 .theme-carrd .example-query {
-    border: 2px solid var(--border);
-    background: transparent;
-    transition: all 0.15s ease;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    transition: all 0.3s ease;
+    border-radius: var(--radius);
 }
 
 .theme-carrd .example-query::before {
@@ -580,49 +618,105 @@ body {
 }
 
 .theme-carrd .example-query:hover {
-    background: var(--border);
-    color: var(--background);
-    transform: translateY(-4px);
+    background: var(--surface-hover);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 217, 217, 0.2);
+}
+
+.theme-carrd .chat-input-area {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
 }
 
 .theme-carrd .chat-input {
-    border: 2px solid var(--border);
-    border-radius: 0;
-    font-family: monospace;
-    background: transparent;
+    border: 1px solid var(--border);
+    background: var(--background);
+    color: var(--text-primary);
+    font-family: inherit;
 }
 
 .theme-carrd .chat-input:focus {
-    border-color: var(--border);
-    box-shadow: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 217, 217, 0.2);
     background: var(--surface);
 }
 
 .theme-carrd .send-button {
-    background: var(--border);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
     color: var(--background);
-    border-radius: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-weight: 700;
-    border: 2px solid var(--border);
+    border: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 217, 217, 0.3);
 }
 
 .theme-carrd .send-button:hover:not(:disabled) {
-    background: transparent;
-    color: var(--border);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(0, 217, 217, 0.5);
+}
+
+.theme-carrd .send-button:disabled {
+    background: var(--border);
+    color: var(--text-muted);
+    box-shadow: none;
 }
 
 .theme-carrd .app-footer {
-    border-top: 2px solid var(--border);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-size: 0.75rem;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
 }
 
-.theme-carrd .footer-link {
-    text-decoration: underline;
-    text-underline-offset: 2px;
+.theme-carrd .footer-text {
+    color: var(--text-secondary);
+}
+
+.theme-carrd .footer-link strong {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.theme-carrd .footer-link:hover strong {
+    color: var(--primary-hover);
+    text-shadow: 0 0 10px rgba(0, 217, 217, 0.5);
+}
+
+/* === CARRD THEME ANIMATIONS === */
+.theme-carrd .message {
+    animation: carrdGlowIn 0.5s ease;
+}
+
+@keyframes carrdGlowIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.theme-carrd .welcome-container {
+    animation: carrdFadeIn 0.8s ease;
+}
+
+/* === CARRD SCROLLBAR === */
+.theme-carrd ::-webkit-scrollbar {
+    width: 8px;
+}
+
+.theme-carrd ::-webkit-scrollbar-track {
+    background: var(--background);
+}
+
+.theme-carrd ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+.theme-carrd ::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
 }
 
 /* === CARRD THEME ANIMATIONS === */
