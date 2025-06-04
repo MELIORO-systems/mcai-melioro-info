@@ -1,14 +1,14 @@
 // Hlavní aplikační logika - My AI Chat - Verze s proxy
-// Verze: 1.2 - 2024-01-XX - Rozšířené logování pro Assistant mode
+// Verze: 1.3 - 2024-01-XX - Kompletní sjednocení názvů
 
-const APP_VERSION = "1.2";
+const APP_VERSION = "1.3";
 
 // Globální proměnné
 let messages = [];
 let rateLimitCounter = 0;
 let rateLimitTimer = null;
 let knowledgeBase = ""; // Uložená znalostní báze
-let assistantThreadId = null; // Pro Assistant API
+let agentThreadId = null; // Pro Agent API
 
 // Načíst znalostní bázi
 async function loadKnowledgeBase() {
@@ -87,11 +87,11 @@ async function sendMessage() {
     try {
         let response;
         
-        // Volání podle zvoleného režimu - NYNí PŘES PROXY
+        // Volání podle zvoleného režimu - PŘES PROXY
         if (CONFIG.MODE === "agent") {
-            response = await callAssistantViaProxy(messageText);
+            response = await callAgentViaProxy(messageText);
         } else {
-            response = await callOpenAIViaProxy(messages);
+            response = await callKnowledgeViaProxy(messages);
         }
         
         // Přidat odpověď
@@ -111,8 +111,8 @@ async function sendMessage() {
             errorMessage = 'Překročen limit požadavků. Zkuste to později.';
         } else if (error.message.includes('Failed to fetch')) {
             errorMessage = 'Chyba připojení k internetu.';
-        } else if (error.message.includes('assistant') || error.message.includes('Assistant')) {
-            errorMessage = 'Chyba Assistant API. Zkontrolujte ASSISTANT_ID v config.js.';
+        } else if (error.message.includes('agent') || error.message.includes('Agent')) {
+            errorMessage = 'Chyba Agent API. Zkontrolujte AGENT ID v config.js.';
         }
         
         if (window.uiManager) {
@@ -127,17 +127,17 @@ async function sendMessage() {
     }
 }
 
-// Volání OpenAI Assistant API přes proxy
-async function callAssistantViaProxy(userMessage) {
-    console.log('🤖 Using Assistant mode via proxy');
+// Volání OpenAI Agent API přes proxy
+async function callAgentViaProxy(userMessage) {
+    console.log('🤖 Using Agent mode via proxy');
     console.log('🔗 Proxy URL:', CONFIG.PROXY.URL);
-    console.log('📝 Assistant ID:', CONFIG.AGENT.ASSISTANT_ID);
+    console.log('📝 Agent ID:', CONFIG.AGENT.AGENT_ID);
     console.log('📤 Message:', userMessage.substring(0, 50) + '...');
     
     // 1. Vytvořit thread pokud neexistuje
-    if (!assistantThreadId) {
+    if (!agentThreadId) {
         console.log('🔄 Creating new thread...');
-        const threadResponse = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.ASSISTANT}/threads`, {
+        const threadResponse = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.AGENT}/threads`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -149,17 +149,17 @@ async function callAssistantViaProxy(userMessage) {
         if (!threadResponse.ok) {
             const errorData = await threadResponse.json();
             console.error('❌ Thread creation error:', errorData);
-            throw new Error(`Assistant API error: ${errorData.error || threadResponse.status}`);
+            throw new Error(`Agent API error: ${errorData.error || threadResponse.status}`);
         }
         
         const threadData = await threadResponse.json();
-        assistantThreadId = threadData.id;
-        console.log('✅ Created thread:', assistantThreadId);
+        agentThreadId = threadData.id;
+        console.log('✅ Created thread:', agentThreadId);
     }
     
     // 2. Přidat zprávu do threadu
     console.log('📨 Adding message to thread...');
-    const messageResponse = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.ASSISTANT}/threads/${assistantThreadId}/messages`, {
+    const messageResponse = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.AGENT}/threads/${agentThreadId}/messages`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -176,15 +176,15 @@ async function callAssistantViaProxy(userMessage) {
         console.error('❌ Failed to add message:', error);
     }
     
-    // 3. Spustit assistanta
-    console.log('🚀 Starting assistant run...');
-    const runResponse = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.ASSISTANT}/threads/${assistantThreadId}/runs`, {
+    // 3. Spustit agenta
+    console.log('🚀 Starting agent run...');
+    const runResponse = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.AGENT}/threads/${agentThreadId}/runs`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            assistant_id: CONFIG.AGENT.ASSISTANT_ID
+            assistant_id: CONFIG.AGENT.AGENT_ID
         })
     });
     
@@ -193,16 +193,30 @@ async function callAssistantViaProxy(userMessage) {
         throw new Error(`Assistant run error: ${errorData.error || runResponse.status}`);
     }
     
+    console.log('📥 Run response:', runResponse.status);
+    if (!runResponse.ok) {
+        const errorData = await runResponse.json();
+        console.error('❌ Run creation failed:', errorData);
+        throw new Error(`Agent run error: ${errorData.error || runResponse.status}`);
+    }
+    
     const runData = await runResponse.json();
     const runId = runData.id;
+    console.log('🏃 Run started with ID:', runId);
     
     // 4. Čekat na dokončení
     let runStatus = "in_progress";
-    while (runStatus === "in_progress" || runStatus === "queued") {
+    let attempts = 0;
+    const maxAttempts = 30; // Max 30 sekund
+    
+    while ((runStatus === "in_progress" || runStatus === "queued") && attempts < maxAttempts) {
         await new Promise(resolve => setTimeout(resolve, 1000)); // Čekat 1s
+        attempts++;
+        
+        console.log(`⏳ Checking run status... (attempt ${attempts}/${maxAttempts})`);
         
         const statusResponse = await fetch(
-            `${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.ASSISTANT}/threads/${assistantThreadId}/runs/${runId}`,
+            `${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.AGENT}/threads/${agentThreadId}/runs/${runId}`,
             {
                 method: "GET",
                 headers: {
@@ -211,13 +225,31 @@ async function callAssistantViaProxy(userMessage) {
             }
         );
         
+        if (!statusResponse.ok) {
+            const error = await statusResponse.json();
+            console.error('❌ Status check failed:', error);
+            break;
+        }
+        
         const statusData = await statusResponse.json();
         runStatus = statusData.status;
+        console.log('📊 Run status:', runStatus);
+        
+        if (runStatus === 'failed' || runStatus === 'cancelled' || runStatus === 'expired') {
+            console.error('❌ Run failed with status:', runStatus);
+            console.error('Details:', statusData);
+            throw new Error(`Agent run ${runStatus}`);
+        }
+    }
+    
+    if (attempts >= maxAttempts) {
+        throw new Error('Agent timeout - took too long to respond');
     }
     
     // 5. Získat odpověď
+    console.log('📩 Getting messages...');
     const messagesResponse = await fetch(
-        `${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.ASSISTANT}/threads/${assistantThreadId}/messages`,
+        `${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.AGENT}/threads/${agentThreadId}/messages`,
         {
             method: "GET",
             headers: {
@@ -230,34 +262,34 @@ async function callAssistantViaProxy(userMessage) {
     if (!messagesResponse.ok) {
         const error = await messagesResponse.json();
         console.error('❌ Failed to get messages:', error);
-        throw new Error('Failed to retrieve assistant response');
+        throw new Error('Failed to retrieve agent response');
     }
     
     const messagesData = await messagesResponse.json();
     console.log('📬 Retrieved messages count:', messagesData.data.length);
     
-    // Najít poslední zprávu od assistanta
-    const assistantMessages = messagesData.data.filter(msg => msg.role === 'assistant');
-    console.log('🤖 Assistant messages found:', assistantMessages.length);
+    // Najít poslední zprávu od agenta
+    const agentMessages = messagesData.data.filter(msg => msg.role === 'assistant');
+    console.log('🤖 Agent messages found:', agentMessages.length);
     
-    if (assistantMessages.length === 0) {
-        console.error('❌ No assistant response found');
+    if (agentMessages.length === 0) {
+        console.error('❌ No agent response found');
         console.log('All messages:', messagesData.data.map(m => ({role: m.role, content: m.content[0]?.text?.value?.substring(0, 50)})));
-        throw new Error('Assistant did not respond');
+        throw new Error('Agent did not respond');
     }
     
-    const lastMessage = assistantMessages[0]; // Nejnovější je první
+    const lastMessage = agentMessages[0]; // Nejnovější je první
     const responseText = lastMessage.content[0].text.value;
-    console.log('✅ Assistant response received:', responseText.substring(0, 100) + '...');
+    console.log('✅ Agent response received:', responseText.substring(0, 100) + '...');
     
     return responseText;
 }
 
-// Volání OpenAI API přes proxy
-async function callOpenAIViaProxy(messageHistory) {
+// Volání Knowledge API přes proxy
+async function callKnowledgeViaProxy(messageHistory) {
     console.log('💬 Using Knowledge mode via proxy');
     console.log('🔗 Proxy URL:', CONFIG.PROXY.URL);
-    console.log('📤 Sending request to:', `${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.CHAT}`);
+    console.log('📤 Sending request to:', `${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.KNOWLEDGE}`);
     
     // Sestavit systémový prompt s knowledge base
     let systemPrompt = CONFIG.API.OPENAI.SYSTEM_PROMPT;
@@ -285,7 +317,7 @@ async function callOpenAIViaProxy(messageHistory) {
     console.log('  - Temperature:', requestPayload.temperature);
     console.log('  - Max tokens:', requestPayload.max_tokens);
     
-    const response = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.CHAT}`, {
+    const response = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.KNOWLEDGE}`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -335,14 +367,17 @@ function checkRateLimit() {
 // Inicializace aplikace
 async function initApp() {
     console.log('🚀 Starting My AI Chat...');
-    console.log(`🤖 Mode: ${CONFIG.MODE}`);
-    console.log(`🔐 Using proxy: ${CONFIG.PROXY.URL}`);
+    console.log('📌 App Version:', APP_VERSION);
+    console.log('📌 Config Version:', CONFIG.VERSION || 'not set');
+    console.log('📌 Last Update:', CONFIG.LAST_UPDATE || 'not set');
+    console.log('🤖 Mode:', CONFIG.MODE);
+    console.log('🔐 Using proxy:', CONFIG.PROXY.URL);
     
     // Načíst knowledge base pouze v knowledge režimu
     if (CONFIG.MODE === "knowledge") {
         await loadKnowledgeBase();
     } else if (CONFIG.MODE === "agent") {
-        console.log('🤖 Using Assistant:', CONFIG.AGENT.ASSISTANT_ID || 'Not configured');
+        console.log('🤖 Using Agent:', CONFIG.AGENT.AGENT_ID || 'Not configured');
     }
     
     // Nastavit téma
@@ -383,7 +418,7 @@ window.chatSystem = {
     config: CONFIG,
     clearMessages: () => { 
         messages = []; 
-        assistantThreadId = null; // Reset thread při clear
+        agentThreadId = null; // Reset thread při clear
     },
     mode: CONFIG.MODE
 };
