@@ -2,7 +2,7 @@
 class UIManager {
     constructor() {
         this.currentTheme = CONFIG.UI.DEFAULT_THEME || 'claude';
-        this.themes = {
+        this.themes = CONFIG.UI.THEMES || {
             claude: {
                 name: 'Claude',
                 description: 'Výchozí světlé téma'
@@ -17,7 +17,7 @@ class UIManager {
             },
             carrd: {
                 name: 'Carrd',
-                description: 'Minimalistické téma inspirované Carrd.co'
+                description: 'Moderní téma s neonovými akcenty'
             }
         };
         
