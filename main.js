@@ -157,36 +157,43 @@ async function callAgentViaProxy(userMessage) {
         console.log('✅ Created thread:', agentThreadId);
     }
     
-    // 2. Přidat zprávu do threadu
-    console.log('📨 Adding message to thread...');
-    const messageResponse = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.AGENT}/threads/${agentThreadId}/messages`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            role: "user",
-            content: userMessage
-        })
-    });
+    // 2. a 3. Přidat zprávu a spustit agenta PARALELNĚ
+    console.log('📨 Adding message and starting run...');
     
-    console.log('📥 Message add response:', messageResponse.status);
+    // Paralelní volání pro rychlost
+    const [messageResponse, runResponse] = await Promise.all([
+        // Přidat zprávu
+        fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.AGENT}/threads/${agentThreadId}/messages`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                role: "user",
+                content: userMessage
+            })
+        }),
+        // Počkat 100ms a pak spustit run (OpenAI potřebuje chvíli na zpracování zprávy)
+        new Promise(resolve => setTimeout(resolve, 100)).then(() =>
+            fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.AGENT}/threads/${agentThreadId}/runs`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    assistant_id: CONFIG.AGENT.AGENT_ID
+                })
+            })
+        )
+    ]);
+    
+    console.log('📥 Message response:', messageResponse.status);
+    console.log('📥 Run response:', runResponse.status);
+    
     if (!messageResponse.ok) {
         const error = await messageResponse.json();
         console.error('❌ Failed to add message:', error);
     }
-    
-    // 3. Spustit agenta
-    console.log('🚀 Starting agent run...');
-    const runResponse = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.AGENT}/threads/${agentThreadId}/runs`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            assistant_id: CONFIG.AGENT.AGENT_ID
-        })
-    });
     
     if (!runResponse.ok) {
         const errorData = await runResponse.json();
@@ -204,16 +211,20 @@ async function callAgentViaProxy(userMessage) {
     const runId = runData.id;
     console.log('🏃 Run started with ID:', runId);
     
-    // 4. Čekat na dokončení
+    // 4. Čekat na dokončení - RYCHLEJŠÍ POLLING
     let runStatus = "in_progress";
     let attempts = 0;
-    const maxAttempts = 30; // Max 30 sekund
+    const maxAttempts = 60; // 30 sekund (60 * 500ms)
     
     while ((runStatus === "in_progress" || runStatus === "queued") && attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Čekat 1s
+        // Rychlejší polling - 500ms místo 1000ms
+        await new Promise(resolve => setTimeout(resolve, 500));
         attempts++;
         
-        console.log(`⏳ Checking run status... (attempt ${attempts}/${maxAttempts})`);
+        // Logovat jen každý 4. pokus (každé 2 sekundy)
+        if (attempts % 4 === 1) {
+            console.log(`⏳ Checking run status... (${Math.ceil(attempts/2)}s)`);
+        }
         
         const statusResponse = await fetch(
             `${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.AGENT}/threads/${agentThreadId}/runs/${runId}`,
@@ -388,18 +399,6 @@ async function initApp() {
     // Zobrazit welcome screen
     if (window.uiManager) {
         window.uiManager.showWelcomeScreen();
-    }
-    
-    // Nastavit title a subtitle
-    const titleElement = document.querySelector('.chat-header h1 a');
-    const subtitleElement = document.querySelector('.header-subtitle');
-    const reloadButton = document.querySelector('.index-button');
-    
-    if (titleElement) titleElement.textContent = CONFIG.UI.APP_TITLE;
-    if (subtitleElement) subtitleElement.textContent = CONFIG.UI.APP_SUBTITLE;
-    if (reloadButton) {
-        reloadButton.textContent = CONFIG.UI.RELOAD_BUTTON_TEXT;
-        reloadButton.style.display = CONFIG.UI.SHOW_RELOAD_BUTTON ? 'block' : 'none';
     }
     
     console.log('✅ My AI Chat ready with proxy protection');
