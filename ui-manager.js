@@ -14,6 +14,10 @@ class UIManager {
             replit: {
                 name: 'Replit',
                 description: 'Tmavé téma pro noční práci'
+            },
+            carrd: {
+                name: 'Carrd',
+                description: 'Minimalistické téma inspirované Carrd.co'
             }
         };
         
@@ -34,7 +38,7 @@ class UIManager {
         }
         
         // Odstranit všechny theme třídy
-        document.body.classList.remove('theme-claude', 'theme-google', 'theme-replit');
+        document.body.classList.remove('theme-claude', 'theme-google', 'theme-replit', 'theme-carrd');
         
         // Přidat třídu jen pro non-claude témata (claude je výchozí)
         if (themeKey !== 'claude') {
