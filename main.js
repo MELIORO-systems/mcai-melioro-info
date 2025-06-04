@@ -396,11 +396,6 @@ async function initApp() {
         window.uiManager.setTheme(CONFIG.UI.DEFAULT_THEME);
     }
     
-    // Zobrazit welcome screen
-    if (window.uiManager) {
-        window.uiManager.showWelcomeScreen();
-    }
-    
     console.log('✅ My AI Chat ready with proxy protection');
 }
 
