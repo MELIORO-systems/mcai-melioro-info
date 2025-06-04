@@ -61,6 +61,28 @@
     --error-color: #f56565;
 }
 
+/* Carrd theme */
+.theme-carrd {
+    --primary-color: #000000;
+    --primary-hover: #333333;
+    --secondary-color: #666666;
+    --success-color: #00d084;
+    --warning-color: #ffb900;
+    --error-color: #ff0000;
+    --background: #ffffff;
+    --surface: #ffffff;
+    --surface-hover: #f8f8f8;
+    --border: #000000;
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --text-muted: #666666;
+    --shadow-sm: none;
+    --shadow: 0 2px 4px rgba(0,0,0,0.1);
+    --shadow-lg: 0 8px 16px rgba(0,0,0,0.15);
+    --radius: 0;
+    --radius-lg: 0;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
     background: var(--background);
@@ -201,6 +223,10 @@ body {
 
 .theme-btn.theme-replit {
     background: linear-gradient(135deg, #0e1525 0%, #f56565 100%);
+}
+
+.theme-btn.theme-carrd {
+    background: linear-gradient(135deg, #ffffff 0%, #000000 100%);
 }
 
 /* === CHAT MESSAGES === */
@@ -434,7 +460,6 @@ body {
 }
 
 .footer-text {
-.footer-text {
     color: var(--text-secondary);
 }
 
@@ -450,6 +475,183 @@ body {
 
 .footer-link:hover {
     text-decoration: underline;
+}
+
+/* === CARRD THEME SPECIFIC STYLES === */
+.theme-carrd .chat-container {
+    border: 2px solid var(--border);
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.theme-carrd .chat-header {
+    border-bottom: 2px solid var(--border);
+    background: var(--surface);
+    padding: 2rem;
+}
+
+.theme-carrd .chat-header h1 {
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    text-transform: uppercase;
+}
+
+.theme-carrd .header-subtitle {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.75rem;
+}
+
+.theme-carrd .index-button {
+    border: 2px solid var(--border);
+    background: transparent;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    transition: all 0.15s ease;
+}
+
+.theme-carrd .index-button:hover {
+    background: var(--border);
+    color: var(--background);
+}
+
+.theme-carrd .theme-btn {
+    border: 2px solid var(--border);
+    transition: all 0.15s ease;
+}
+
+.theme-carrd .theme-btn:hover {
+    transform: none;
+    border-width: 3px;
+}
+
+.theme-carrd .theme-btn.active {
+    border-width: 3px;
+    box-shadow: none;
+}
+
+.theme-carrd .message {
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.theme-carrd .user-message {
+    background: var(--border);
+    color: var(--background);
+    border: 2px solid var(--border);
+}
+
+.theme-carrd .assistant-message {
+    background: var(--surface);
+    border: 2px solid var(--border);
+}
+
+.theme-carrd .system-message,
+.theme-carrd .error-message {
+    border: 2px solid currentColor;
+    background: transparent;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.theme-carrd .welcome-title {
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.05em;
+}
+
+.theme-carrd .welcome-subtitle {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.875rem;
+}
+
+.theme-carrd .example-query {
+    border: 2px solid var(--border);
+    background: transparent;
+    transition: all 0.15s ease;
+}
+
+.theme-carrd .example-query::before {
+    display: none;
+}
+
+.theme-carrd .example-query:hover {
+    background: var(--border);
+    color: var(--background);
+    transform: translateY(-4px);
+}
+
+.theme-carrd .chat-input {
+    border: 2px solid var(--border);
+    border-radius: 0;
+    font-family: monospace;
+    background: transparent;
+}
+
+.theme-carrd .chat-input:focus {
+    border-color: var(--border);
+    box-shadow: none;
+    background: var(--surface);
+}
+
+.theme-carrd .send-button {
+    background: var(--border);
+    color: var(--background);
+    border-radius: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    border: 2px solid var(--border);
+}
+
+.theme-carrd .send-button:hover:not(:disabled) {
+    background: transparent;
+    color: var(--border);
+}
+
+.theme-carrd .app-footer {
+    border-top: 2px solid var(--border);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+}
+
+.theme-carrd .footer-link {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* === CARRD THEME ANIMATIONS === */
+.theme-carrd .message {
+    animation: carrdSlideIn 0.4s ease;
+}
+
+@keyframes carrdSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.theme-carrd .welcome-container {
+    animation: carrdFadeIn 0.6s ease;
+}
+
+@keyframes carrdFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 /* === RESPONSIVE === */
