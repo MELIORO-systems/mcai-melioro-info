@@ -3,7 +3,7 @@
 
 const CONFIG = {
     // === VERZE KONFIGURACE ===
-    VERSION: "1.2",
+    VERSION: "1.3",
     LAST_UPDATE: new Date().toISOString(),
     // HLAVNÍ PŘEPÍNAČ REŽIMU
     MODE: "agent", // "knowledge" = s knowledge base (používá OPENAI_API_KEY_KNOWLEDGE)
