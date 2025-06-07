@@ -1,9 +1,9 @@
 // Konfigurace aplikace - My AI Chat
-// Verze: 1.2 - 2024-01-XX - Sjednocené názvy knowledge/agent
+// Verze: 1.3 - 2024-01-XX - Aktualizováno na GPT-4.1 Nano
 
 const CONFIG = {
     // === VERZE KONFIGURACE ===
-    VERSION: "1.2",
+    VERSION: "1.3",
     LAST_UPDATE: new Date().toISOString(),
     // HLAVNÍ PŘEPÍNAČ REŽIMU
     MODE: "agent", // "knowledge" = s knowledge base (používá OPENAI_API_KEY_KNOWLEDGE)
@@ -26,11 +26,14 @@ const CONFIG = {
         OPENAI: {
             // API klíč je nyní bezpečně uložen v Cloudflare Worker
             // API_KEY: "sk-proj-...", // ODSTRANĚNO - není potřeba
-            MODEL: "gpt-4o-mini",  // Změněno z gpt-3.5-turbo
+            MODEL: "gpt-4.1-nano",  // ZMĚNĚNO na GPT-4.1 Nano - nejrychlejší a nejlevnější model s velkým kontextem
             TEMPERATURE: 0.7,
-            MAX_TOKENS: 1000,
+            MAX_TOKENS: 32768,  // ZMĚNĚNO - zvýšeno na maximum pro GPT-4.1 Nano (32,768 tokenů)
             // Systémový prompt - definuje chování chatbota
-            SYSTEM_PROMPT: "Jsi AI asistent společnosti MELIORO Systems. Odpovídáš profesionálně a přátelsky na otázky o našich službách, produktech a firmě. Vždy se snaž být konkrétní a nápomocný. Odpovídej v češtině."
+            SYSTEM_PROMPT: "Jsi AI asistent společnosti MELIORO Systems. Odpovídáš profesionálně a přátelsky na otázky o našich službách, produktech a firmě. Vždy se snaž být konkrétní a nápomocný. Odpovídej v češtině.",
+            // Nové parametry pro GPT-4.1 Nano
+            CONTEXT_WINDOW: 1047576,  // Maximální velikost kontextu (1,047,576 tokenů)
+            CAPABILITIES: ["chat", "analysis", "reasoning", "coding", "vision", "long-context"]
         }
     },
     
@@ -39,6 +42,9 @@ const CONFIG = {
         // ID vašeho OpenAI assistanta (ano, OpenAI to stále nazývá "assistant")
         AGENT_ID: "asst_zTqY6AIGJZUprgy04VK2Bw0S",
         
+        // Model pro Agent mode - GPT-4.1 Nano podporuje Assistant API
+        MODEL: "gpt-4.1-nano",  // PŘIDÁNO - specifikace modelu pro agenta
+        
         // Nastavení časování
         POLLING_INTERVAL: 500,  // ms mezi kontrolami stavu (500 = 2x rychlejší)
         MAX_WAIT_TIME: 30000,   // max čekání v ms (30 sekund)
@@ -46,11 +52,12 @@ const CONFIG = {
         // JAK VYTVOŘIT AGENTA:
         // 1. Jděte na https://platform.openai.com/assistants
         // 2. Klikněte na "Create assistant"
-        // 3. Nastavte KRÁTKÉ instrukce (max 500 znaků)
-        // 4. Nepoužívejte tools/functions (zpomalují)
-        // 5. Knowledge files max 1-2 malé soubory
-        // 6. Zkopírujte Assistant ID (začíná "asst_")
-        // 7. Vložte ID výše a změňte MODE na "agent"
+        // 3. Vyberte model "gpt-4.1-nano" (nejrychlejší a nejlevnější)
+        // 4. Nastavte KRÁTKÉ instrukce (max 500 znaků)
+        // 5. Nepoužívejte tools/functions (zpomalují)
+        // 6. Knowledge files max 1-2 malé soubory
+        // 7. Zkopírujte Assistant ID (začíná "asst_")
+        // 8. Vložte ID výše a změňte MODE na "agent"
     },
     
     // UI nastavení
@@ -121,7 +128,9 @@ const CONFIG = {
         WELCOME_SUBTITLE: "Zeptejte se mě na cokoliv o našich službách a produktech",
         ERROR: "Omlouvám se, nastala chyba. Zkuste to prosím znovu.",
         NO_API_KEY: "Chyba konfigurace. Kontaktujte prosím správce.",
-        LOADING: "Přemýšlím..."
+        LOADING: "Přemýšlím...",
+        // Nová zpráva pro info o modelu
+        MODEL_INFO: "Používám GPT-4.1 Nano - nejrychlejší model s velkým kontextem"
     },
     
     // Znalostní báze
@@ -143,6 +152,17 @@ const CONFIG = {
         ENABLED: true,
         MAX_MESSAGES_PER_MINUTE: 10,
         COOLDOWN_MESSAGE: "Příliš mnoho dotazů. Počkejte prosím chvíli."
+    },
+    
+    // Informace o použitém modelu
+    MODEL_INFO: {
+        NAME: "GPT-4.1 Nano",
+        ID: "gpt-4.1-nano",
+        DESCRIPTION: "Nejrychlejší a nejlevnější model s velkým kontextem",
+        CONTEXT_WINDOW: 1047576,
+        MAX_OUTPUT: 32768,
+        CAPABILITIES: ["chat", "analysis", "reasoning", "coding", "vision", "long-context"],
+        SUPPORTS_ASSISTANT_API: true
     }
 };
 
