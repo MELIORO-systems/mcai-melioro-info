@@ -1,14 +1,14 @@
-// Hlavní aplikační logika - My AI Chat - Verze s proxy
-// Verze: 1.4 - 2024-01-XX - Podpora GPT-4.1 Nano
+// Hlavní aplikační logika - My AI Chat
+// Verze: 2.0 - Univerzální podpora modelů
 
-const APP_VERSION = "1.4";
+const APP_VERSION = "2.0";
 
 // Globální proměnné
 let messages = [];
 let rateLimitCounter = 0;
 let rateLimitTimer = null;
-let knowledgeBase = ""; // Uložená znalostní báze
-let agentThreadId = null; // Pro Agent API
+let knowledgeBase = "";
+let agentThreadId = null;
 
 // Načíst znalostní bázi
 async function loadKnowledgeBase() {
@@ -44,15 +44,6 @@ async function loadKnowledgeBase() {
     if (loadedFiles > 0) {
         knowledgeBase = CONFIG.KNOWLEDGE_BASE.CONTEXT_TEMPLATE.replace('{knowledge}', allKnowledge);
         console.log(`✅ Knowledge base ready (${loadedFiles} files loaded)`);
-        
-        // Vypočítat velikost knowledge base v tokenech (přibližně)
-        const approxTokens = Math.ceil(knowledgeBase.length / 4);
-        console.log(`📊 Knowledge base size: ~${approxTokens} tokens`);
-        
-        // Upozornění na velký kontext pro GPT-4.1 Nano
-        if (approxTokens > 100000) {
-            console.log(`💡 GPT-4.1 Nano supports up to ${CONFIG.API.OPENAI.CONTEXT_WINDOW.toLocaleString()} tokens!`);
-        }
     } else {
         console.warn('⚠️ No knowledge files were loaded');
     }
@@ -82,8 +73,8 @@ async function sendMessage() {
     
     // Vyčistit input a nastavit loading stav
     chatInput.value = '';
-    chatInput.style.height = 'auto'; // Reset výšky
-    chatInput.style.overflowY = 'hidden'; // Reset scrollbaru
+    chatInput.style.height = 'auto';
+    chatInput.style.overflowY = 'hidden';
     chatInput.disabled = true;
     sendButton.disabled = true;
     sendButton.textContent = CONFIG.MESSAGES.LOADING;
@@ -96,7 +87,7 @@ async function sendMessage() {
     try {
         let response;
         
-        // Volání podle zvoleného režimu - PŘES PROXY
+        // Volání podle zvoleného režimu
         if (CONFIG.MODE === "agent") {
             response = await callAgentViaProxy(messageText);
         } else {
@@ -122,8 +113,6 @@ async function sendMessage() {
             errorMessage = 'Chyba připojení k internetu.';
         } else if (error.message.includes('agent') || error.message.includes('Agent')) {
             errorMessage = 'Chyba Agent API. Zkontrolujte AGENT ID v config.js.';
-        } else if (error.message.includes('model')) {
-            errorMessage = 'Chyba modelu. GPT-4.1 Nano nemusí být dostupný.';
         }
         
         if (window.uiManager) {
@@ -133,7 +122,7 @@ async function sendMessage() {
         // Obnovit UI
         chatInput.disabled = false;
         sendButton.disabled = false;
-        sendButton.textContent = 'Odeslat';
+        sendButton.textContent = CONFIG.UI.SEND_BUTTON_TEXT;
         chatInput.focus();
     }
 }
@@ -143,7 +132,7 @@ async function callAgentViaProxy(userMessage) {
     console.log('🤖 Using Agent mode via proxy');
     console.log('🔗 Proxy URL:', CONFIG.PROXY.URL);
     console.log('📝 Agent ID:', CONFIG.AGENT.AGENT_ID);
-    console.log('🧠 Model:', CONFIG.AGENT.MODEL || CONFIG.MODEL_INFO.ID);
+    console.log('🧠 Model:', CONFIG.DEFAULT_MODEL);
     console.log('📤 Message:', userMessage.substring(0, 50) + '...');
     
     // 1. Vytvořit thread pokud neexistuje
@@ -156,8 +145,6 @@ async function callAgentViaProxy(userMessage) {
             }
         });
         
-        console.log('📥 Thread creation response:', threadResponse.status);
-        
         if (!threadResponse.ok) {
             const errorData = await threadResponse.json();
             console.error('❌ Thread creation error:', errorData);
@@ -169,52 +156,37 @@ async function callAgentViaProxy(userMessage) {
         console.log('✅ Created thread:', agentThreadId);
     }
     
-    // 2. a 3. Přidat zprávu a spustit agenta PARALELNĚ
-    console.log('📨 Adding message and starting run with GPT-4.1 Nano...');
-    
-    // Paralelní volání pro rychlost
-    const [messageResponse, runResponse] = await Promise.all([
-        // Přidat zprávu
-        fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.AGENT}/threads/${agentThreadId}/messages`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                role: "user",
-                content: userMessage
-            })
-        }),
-        // Počkat 100ms a pak spustit run (OpenAI potřebuje chvíli na zpracování zprávy)
-        new Promise(resolve => setTimeout(resolve, 100)).then(() =>
-            fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.AGENT}/threads/${agentThreadId}/runs`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    assistant_id: CONFIG.AGENT.AGENT_ID,
-                    model: CONFIG.AGENT.MODEL || "gpt-4.1-nano",  // Explicitně nastavit model
-                    max_completion_tokens: CONFIG.API.OPENAI.MAX_TOKENS || 32768
-                })
-            })
-        )
-    ]);
-    
-    console.log('📥 Message response:', messageResponse.status);
-    console.log('📥 Run response:', runResponse.status);
+    // 2. Přidat zprávu
+    console.log('📨 Adding message...');
+    const messageResponse = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.AGENT}/threads/${agentThreadId}/messages`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            role: "user",
+            content: userMessage
+        })
+    });
     
     if (!messageResponse.ok) {
         const error = await messageResponse.json();
         console.error('❌ Failed to add message:', error);
+        throw new Error('Failed to add message to thread');
     }
     
-    if (!runResponse.ok) {
-        const errorData = await runResponse.json();
-        throw new Error(`Assistant run error: ${errorData.error || runResponse.status}`);
-    }
+    // 3. Spustit agenta
+    console.log('🏃 Starting run...');
+    const runResponse = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.AGENT}/threads/${agentThreadId}/runs`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            assistant_id: CONFIG.AGENT.AGENT_ID
+        })
+    });
     
-    console.log('📥 Run response:', runResponse.status);
     if (!runResponse.ok) {
         const errorData = await runResponse.json();
         console.error('❌ Run creation failed:', errorData);
@@ -224,21 +196,18 @@ async function callAgentViaProxy(userMessage) {
     const runData = await runResponse.json();
     const runId = runData.id;
     console.log('🏃 Run started with ID:', runId);
-    console.log('🧠 Using model:', runData.model || 'gpt-4.1-nano');
     
-    // 4. Čekat na dokončení - RYCHLEJŠÍ POLLING
+    // 4. Čekat na dokončení
     let runStatus = "in_progress";
     let attempts = 0;
-    const maxAttempts = 60; // 30 sekund (60 * 500ms)
+    const maxAttempts = CONFIG.AGENT.MAX_WAIT_TIME / CONFIG.AGENT.POLLING_INTERVAL;
     
     while ((runStatus === "in_progress" || runStatus === "queued") && attempts < maxAttempts) {
-        // Rychlejší polling - 500ms místo 1000ms
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, CONFIG.AGENT.POLLING_INTERVAL));
         attempts++;
         
-        // Logovat jen každý 4. pokus (každé 2 sekundy)
         if (attempts % 4 === 1) {
-            console.log(`⏳ Checking run status... (${Math.ceil(attempts/2)}s)`);
+            console.log(`⏳ Checking run status... (${Math.ceil(attempts * CONFIG.AGENT.POLLING_INTERVAL / 1000)}s)`);
         }
         
         const statusResponse = await fetch(
@@ -260,14 +229,8 @@ async function callAgentViaProxy(userMessage) {
         const statusData = await statusResponse.json();
         runStatus = statusData.status;
         
-        // Pouze logovat změny stavu
-        if (attempts === 1 || statusData.status !== "in_progress") {
-            console.log('📊 Run status:', runStatus);
-        }
-        
         if (runStatus === 'failed' || runStatus === 'cancelled' || runStatus === 'expired') {
             console.error('❌ Run failed with status:', runStatus);
-            console.error('Details:', statusData);
             throw new Error(`Agent run ${runStatus}`);
         }
     }
@@ -288,7 +251,6 @@ async function callAgentViaProxy(userMessage) {
         }
     );
     
-    console.log('📥 Messages response:', messagesResponse.status);
     if (!messagesResponse.ok) {
         const error = await messagesResponse.json();
         console.error('❌ Failed to get messages:', error);
@@ -296,22 +258,15 @@ async function callAgentViaProxy(userMessage) {
     }
     
     const messagesData = await messagesResponse.json();
-    console.log('📬 Retrieved messages count:', messagesData.data.length);
-    
-    // Najít poslední zprávu od agenta
     const agentMessages = messagesData.data.filter(msg => msg.role === 'assistant');
-    console.log('🤖 Agent messages found:', agentMessages.length);
     
     if (agentMessages.length === 0) {
-        console.error('❌ No agent response found');
-        console.log('All messages:', messagesData.data.map(m => ({role: m.role, content: m.content[0]?.text?.value?.substring(0, 50)})));
         throw new Error('Agent did not respond');
     }
     
-    const lastMessage = agentMessages[0]; // Nejnovější je první
+    const lastMessage = agentMessages[0];
     const responseText = lastMessage.content[0].text.value;
-    console.log('✅ Agent response received:', responseText.substring(0, 100) + '...');
-    console.log('🚀 GPT-4.1 Nano delivered response successfully!');
+    console.log('✅ Agent response received');
     
     return responseText;
 }
@@ -320,18 +275,21 @@ async function callAgentViaProxy(userMessage) {
 async function callKnowledgeViaProxy(messageHistory) {
     console.log('💬 Using Knowledge mode via proxy');
     console.log('🔗 Proxy URL:', CONFIG.PROXY.URL);
-    console.log('🧠 Model:', CONFIG.API.OPENAI.MODEL);
-    console.log('📤 Sending request to:', `${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.KNOWLEDGE}`);
+    console.log('🧠 Model:', CONFIG.DEFAULT_MODEL);
     
     // Sestavit systémový prompt s knowledge base
-    let systemPrompt = CONFIG.API.OPENAI.SYSTEM_PROMPT;
+    let systemPrompt = CONFIG.API.SYSTEM_PROMPT;
     if (knowledgeBase) {
-        systemPrompt = `${CONFIG.API.OPENAI.SYSTEM_PROMPT}\n\n${knowledgeBase}`;
+        systemPrompt = `${CONFIG.API.SYSTEM_PROMPT}\n\n${knowledgeBase}`;
         console.log('📚 Knowledge base included in prompt');
     }
     
+    // Získat max_tokens pro model
+    const modelInfo = CONFIG.KNOWN_MODELS[CONFIG.DEFAULT_MODEL];
+    const maxTokens = modelInfo?.max_output || CONFIG.API.MAX_TOKENS;
+    
     const requestPayload = {
-        model: CONFIG.API.OPENAI.MODEL,
+        model: CONFIG.DEFAULT_MODEL,
         messages: [
             {
                 role: "system",
@@ -339,8 +297,8 @@ async function callKnowledgeViaProxy(messageHistory) {
             },
             ...messageHistory
         ],
-        temperature: CONFIG.API.OPENAI.TEMPERATURE,
-        max_tokens: CONFIG.API.OPENAI.MAX_TOKENS
+        temperature: CONFIG.API.TEMPERATURE,
+        max_tokens: maxTokens
     };
     
     console.log('📊 Request details:');
@@ -348,16 +306,6 @@ async function callKnowledgeViaProxy(messageHistory) {
     console.log('  - Messages count:', requestPayload.messages.length);
     console.log('  - Temperature:', requestPayload.temperature);
     console.log('  - Max tokens:', requestPayload.max_tokens);
-    console.log('  - Context window:', CONFIG.API.OPENAI.CONTEXT_WINDOW?.toLocaleString() || 'Not specified');
-    
-    // Vypočítat přibližnou velikost kontextu
-    const contextSize = JSON.stringify(requestPayload.messages).length;
-    const approxTokens = Math.ceil(contextSize / 4);
-    console.log(`  - Approx. context size: ~${approxTokens} tokens`);
-    
-    if (CONFIG.API.OPENAI.CONTEXT_WINDOW && approxTokens < CONFIG.API.OPENAI.CONTEXT_WINDOW / 10) {
-        console.log(`💡 Using only ~${Math.round(approxTokens / CONFIG.API.OPENAI.CONTEXT_WINDOW * 100)}% of GPT-4.1 Nano's context window`);
-    }
     
     const response = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.KNOWLEDGE}`, {
         method: "POST",
@@ -367,14 +315,10 @@ async function callKnowledgeViaProxy(messageHistory) {
         body: JSON.stringify(requestPayload)
     });
     
-    console.log('📥 Response status:', response.status);
-    
     if (!response.ok) {
         const errorData = await response.json();
-        console.error('❌ API Error details:', errorData);
-        console.error('❌ Full error:', JSON.stringify(errorData, null, 2));
+        console.error('❌ API Error:', errorData);
         
-        // Specifické chyby podle odpovědi
         let errorMessage = errorData.error || `Status ${response.status}`;
         if (typeof errorData.error === 'object') {
             errorMessage = errorData.error.message || errorData.error.error || JSON.stringify(errorData.error);
@@ -385,14 +329,6 @@ async function callKnowledgeViaProxy(messageHistory) {
     
     const data = await response.json();
     console.log('✅ Response received successfully');
-    console.log('📝 Response preview:', data.choices[0].message.content.substring(0, 100) + '...');
-    
-    // Logovat info o modelu pokud je v odpovědi
-    if (data._model_info) {
-        console.log('🧠 Model info:', data._model_info);
-    }
-    
-    console.log('🚀 GPT-4.1 Nano delivered response successfully!');
     
     return data.choices[0].message.content;
 }
@@ -407,7 +343,7 @@ function checkRateLimit() {
         rateLimitTimer = setTimeout(() => {
             rateLimitCounter = 0;
             rateLimitTimer = null;
-        }, 60000); // Reset po minutě
+        }, 60000);
     }
     
     return rateLimitCounter <= CONFIG.RATE_LIMITING.MAX_MESSAGES_PER_MINUTE;
@@ -417,43 +353,42 @@ function checkRateLimit() {
 async function initApp() {
     console.log('🚀 Starting My AI Chat...');
     console.log('📌 App Version:', APP_VERSION);
-    console.log('📌 Config Version:', CONFIG.VERSION || 'not set');
-    console.log('📌 Last Update:', CONFIG.LAST_UPDATE || 'not set');
+    console.log('📌 Config Version:', CONFIG.VERSION);
     console.log('🤖 Mode:', CONFIG.MODE);
-    console.log('🧠 Model:', CONFIG.MODEL_INFO ? CONFIG.MODEL_INFO.NAME : CONFIG.API.OPENAI.MODEL);
+    console.log('🧠 Model:', CONFIG.DEFAULT_MODEL);
     console.log('🔐 Using proxy:', CONFIG.PROXY.URL);
     
-    // Zobrazit info o modelu
-    if (CONFIG.MODEL_INFO) {
+    // Zobrazit info o modelu pokud je známý
+    const modelInfo = CONFIG.KNOWN_MODELS[CONFIG.DEFAULT_MODEL];
+    if (modelInfo) {
         console.log('');
-        console.log('=== GPT-4.1 NANO INFO ===');
-        console.log('📝 Description:', CONFIG.MODEL_INFO.DESCRIPTION);
-        console.log('📊 Context window:', CONFIG.MODEL_INFO.CONTEXT_WINDOW.toLocaleString(), 'tokens');
-        console.log('📤 Max output:', CONFIG.MODEL_INFO.MAX_OUTPUT.toLocaleString(), 'tokens');
-        console.log('🎯 Capabilities:', CONFIG.MODEL_INFO.CAPABILITIES.join(', '));
-        console.log('🔧 Assistant API:', CONFIG.MODEL_INFO.SUPPORTS_ASSISTANT_API ? 'Supported ✅' : 'Not supported ❌');
+        console.log(`=== ${modelInfo.name.toUpperCase()} INFO ===`);
+        console.log('📝 Description:', modelInfo.description);
+        if (modelInfo.context_window) {
+            console.log('📊 Context window:', modelInfo.context_window.toLocaleString(), 'tokens');
+        }
+        if (modelInfo.max_output) {
+            console.log('📤 Max output:', modelInfo.max_output.toLocaleString(), 'tokens');
+        }
         console.log('========================');
-        console.log('');
     }
     
     // Načíst knowledge base pouze v knowledge režimu
     if (CONFIG.MODE === "knowledge") {
         await loadKnowledgeBase();
     } else if (CONFIG.MODE === "agent") {
-        console.log('🤖 Using Agent:', CONFIG.AGENT.AGENT_ID || 'Not configured');
-        console.log('🧠 Agent Model:', CONFIG.AGENT.MODEL || 'Default');
+        console.log('🤖 Using Agent:', CONFIG.AGENT.AGENT_ID);
     }
     
-    // OPRAVA: Načíst uložené téma, nebo použít výchozí
+    // Načíst uložené téma
     if (window.uiManager) {
         const savedTheme = localStorage.getItem('selectedTheme');
         const themeToUse = savedTheme || CONFIG.UI.DEFAULT_THEME;
-        console.log('🎨 Loading theme:', themeToUse, savedTheme ? '(saved)' : '(default)');
+        console.log('🎨 Loading theme:', themeToUse);
         window.uiManager.setTheme(themeToUse);
     }
     
-    console.log('✅ My AI Chat ready with proxy protection');
-    console.log('🚀 Powered by GPT-4.1 Nano - The fastest model with massive context!');
+    console.log('✅ My AI Chat ready!');
 }
 
 // Spuštění aplikace
@@ -469,14 +404,12 @@ window.chatSystem = {
     config: CONFIG,
     clearMessages: () => { 
         messages = []; 
-        agentThreadId = null; // Reset thread při clear
+        agentThreadId = null;
     },
-    mode: CONFIG.MODE,
-    modelInfo: CONFIG.MODEL_INFO
+    mode: CONFIG.MODE
 };
 
 // Zachování kompatibility
 window.sendMessage = sendMessage;
 
 console.log('📦 Main.js loaded successfully');
-console.log('🧠 Ready to use GPT-4.1 Nano!');
