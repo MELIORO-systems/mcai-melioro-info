@@ -1,7 +1,7 @@
 // Hlavní aplikační logika - My AI Chat - Verze s proxy
-// Verze: 1.3 - 2024-01-XX - Kompletní sjednocení názvů
+// Verze: 1.4 - 2024-01-XX - Podpora GPT-4.1 Nano
 
-const APP_VERSION = "1.3";
+const APP_VERSION = "1.4";
 
 // Globální proměnné
 let messages = [];
@@ -44,6 +44,15 @@ async function loadKnowledgeBase() {
     if (loadedFiles > 0) {
         knowledgeBase = CONFIG.KNOWLEDGE_BASE.CONTEXT_TEMPLATE.replace('{knowledge}', allKnowledge);
         console.log(`✅ Knowledge base ready (${loadedFiles} files loaded)`);
+        
+        // Vypočítat velikost knowledge base v tokenech (přibližně)
+        const approxTokens = Math.ceil(knowledgeBase.length / 4);
+        console.log(`📊 Knowledge base size: ~${approxTokens} tokens`);
+        
+        // Upozornění na velký kontext pro GPT-4.1 Nano
+        if (approxTokens > 100000) {
+            console.log(`💡 GPT-4.1 Nano supports up to ${CONFIG.API.OPENAI.CONTEXT_WINDOW.toLocaleString()} tokens!`);
+        }
     } else {
         console.warn('⚠️ No knowledge files were loaded');
     }
@@ -113,6 +122,8 @@ async function sendMessage() {
             errorMessage = 'Chyba připojení k internetu.';
         } else if (error.message.includes('agent') || error.message.includes('Agent')) {
             errorMessage = 'Chyba Agent API. Zkontrolujte AGENT ID v config.js.';
+        } else if (error.message.includes('model')) {
+            errorMessage = 'Chyba modelu. GPT-4.1 Nano nemusí být dostupný.';
         }
         
         if (window.uiManager) {
@@ -132,6 +143,7 @@ async function callAgentViaProxy(userMessage) {
     console.log('🤖 Using Agent mode via proxy');
     console.log('🔗 Proxy URL:', CONFIG.PROXY.URL);
     console.log('📝 Agent ID:', CONFIG.AGENT.AGENT_ID);
+    console.log('🧠 Model:', CONFIG.AGENT.MODEL || CONFIG.MODEL_INFO.ID);
     console.log('📤 Message:', userMessage.substring(0, 50) + '...');
     
     // 1. Vytvořit thread pokud neexistuje
@@ -158,7 +170,7 @@ async function callAgentViaProxy(userMessage) {
     }
     
     // 2. a 3. Přidat zprávu a spustit agenta PARALELNĚ
-    console.log('📨 Adding message and starting run...');
+    console.log('📨 Adding message and starting run with GPT-4.1 Nano...');
     
     // Paralelní volání pro rychlost
     const [messageResponse, runResponse] = await Promise.all([
@@ -181,7 +193,9 @@ async function callAgentViaProxy(userMessage) {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    assistant_id: CONFIG.AGENT.AGENT_ID
+                    assistant_id: CONFIG.AGENT.AGENT_ID,
+                    model: CONFIG.AGENT.MODEL || "gpt-4.1-nano",  // Explicitně nastavit model
+                    max_completion_tokens: CONFIG.API.OPENAI.MAX_TOKENS || 32768
                 })
             })
         )
@@ -210,6 +224,7 @@ async function callAgentViaProxy(userMessage) {
     const runData = await runResponse.json();
     const runId = runData.id;
     console.log('🏃 Run started with ID:', runId);
+    console.log('🧠 Using model:', runData.model || 'gpt-4.1-nano');
     
     // 4. Čekat na dokončení - RYCHLEJŠÍ POLLING
     let runStatus = "in_progress";
@@ -244,7 +259,11 @@ async function callAgentViaProxy(userMessage) {
         
         const statusData = await statusResponse.json();
         runStatus = statusData.status;
-        console.log('📊 Run status:', runStatus);
+        
+        // Pouze logovat změny stavu
+        if (attempts === 1 || statusData.status !== "in_progress") {
+            console.log('📊 Run status:', runStatus);
+        }
         
         if (runStatus === 'failed' || runStatus === 'cancelled' || runStatus === 'expired') {
             console.error('❌ Run failed with status:', runStatus);
@@ -292,6 +311,7 @@ async function callAgentViaProxy(userMessage) {
     const lastMessage = agentMessages[0]; // Nejnovější je první
     const responseText = lastMessage.content[0].text.value;
     console.log('✅ Agent response received:', responseText.substring(0, 100) + '...');
+    console.log('🚀 GPT-4.1 Nano delivered response successfully!');
     
     return responseText;
 }
@@ -300,6 +320,7 @@ async function callAgentViaProxy(userMessage) {
 async function callKnowledgeViaProxy(messageHistory) {
     console.log('💬 Using Knowledge mode via proxy');
     console.log('🔗 Proxy URL:', CONFIG.PROXY.URL);
+    console.log('🧠 Model:', CONFIG.API.OPENAI.MODEL);
     console.log('📤 Sending request to:', `${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.KNOWLEDGE}`);
     
     // Sestavit systémový prompt s knowledge base
@@ -327,6 +348,16 @@ async function callKnowledgeViaProxy(messageHistory) {
     console.log('  - Messages count:', requestPayload.messages.length);
     console.log('  - Temperature:', requestPayload.temperature);
     console.log('  - Max tokens:', requestPayload.max_tokens);
+    console.log('  - Context window:', CONFIG.API.OPENAI.CONTEXT_WINDOW?.toLocaleString() || 'Not specified');
+    
+    // Vypočítat přibližnou velikost kontextu
+    const contextSize = JSON.stringify(requestPayload.messages).length;
+    const approxTokens = Math.ceil(contextSize / 4);
+    console.log(`  - Approx. context size: ~${approxTokens} tokens`);
+    
+    if (CONFIG.API.OPENAI.CONTEXT_WINDOW && approxTokens < CONFIG.API.OPENAI.CONTEXT_WINDOW / 10) {
+        console.log(`💡 Using only ~${Math.round(approxTokens / CONFIG.API.OPENAI.CONTEXT_WINDOW * 100)}% of GPT-4.1 Nano's context window`);
+    }
     
     const response = await fetch(`${CONFIG.PROXY.URL}${CONFIG.PROXY.ENDPOINTS.KNOWLEDGE}`, {
         method: "POST",
@@ -356,6 +387,13 @@ async function callKnowledgeViaProxy(messageHistory) {
     console.log('✅ Response received successfully');
     console.log('📝 Response preview:', data.choices[0].message.content.substring(0, 100) + '...');
     
+    // Logovat info o modelu pokud je v odpovědi
+    if (data._model_info) {
+        console.log('🧠 Model info:', data._model_info);
+    }
+    
+    console.log('🚀 GPT-4.1 Nano delivered response successfully!');
+    
     return data.choices[0].message.content;
 }
 
@@ -382,13 +420,28 @@ async function initApp() {
     console.log('📌 Config Version:', CONFIG.VERSION || 'not set');
     console.log('📌 Last Update:', CONFIG.LAST_UPDATE || 'not set');
     console.log('🤖 Mode:', CONFIG.MODE);
+    console.log('🧠 Model:', CONFIG.MODEL_INFO ? CONFIG.MODEL_INFO.NAME : CONFIG.API.OPENAI.MODEL);
     console.log('🔐 Using proxy:', CONFIG.PROXY.URL);
+    
+    // Zobrazit info o modelu
+    if (CONFIG.MODEL_INFO) {
+        console.log('');
+        console.log('=== GPT-4.1 NANO INFO ===');
+        console.log('📝 Description:', CONFIG.MODEL_INFO.DESCRIPTION);
+        console.log('📊 Context window:', CONFIG.MODEL_INFO.CONTEXT_WINDOW.toLocaleString(), 'tokens');
+        console.log('📤 Max output:', CONFIG.MODEL_INFO.MAX_OUTPUT.toLocaleString(), 'tokens');
+        console.log('🎯 Capabilities:', CONFIG.MODEL_INFO.CAPABILITIES.join(', '));
+        console.log('🔧 Assistant API:', CONFIG.MODEL_INFO.SUPPORTS_ASSISTANT_API ? 'Supported ✅' : 'Not supported ❌');
+        console.log('========================');
+        console.log('');
+    }
     
     // Načíst knowledge base pouze v knowledge režimu
     if (CONFIG.MODE === "knowledge") {
         await loadKnowledgeBase();
     } else if (CONFIG.MODE === "agent") {
         console.log('🤖 Using Agent:', CONFIG.AGENT.AGENT_ID || 'Not configured');
+        console.log('🧠 Agent Model:', CONFIG.AGENT.MODEL || 'Default');
     }
     
     // OPRAVA: Načíst uložené téma, nebo použít výchozí
@@ -400,6 +453,7 @@ async function initApp() {
     }
     
     console.log('✅ My AI Chat ready with proxy protection');
+    console.log('🚀 Powered by GPT-4.1 Nano - The fastest model with massive context!');
 }
 
 // Spuštění aplikace
@@ -417,10 +471,12 @@ window.chatSystem = {
         messages = []; 
         agentThreadId = null; // Reset thread při clear
     },
-    mode: CONFIG.MODE
+    mode: CONFIG.MODE,
+    modelInfo: CONFIG.MODEL_INFO
 };
 
 // Zachování kompatibility
 window.sendMessage = sendMessage;
 
 console.log('📦 Main.js loaded successfully');
+console.log('🧠 Ready to use GPT-4.1 Nano!');
